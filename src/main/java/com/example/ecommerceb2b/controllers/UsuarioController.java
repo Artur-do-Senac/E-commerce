@@ -17,7 +17,7 @@ public class UsuarioController {
     private UsuarioRepository usuarioRepository;
 
     @GetMapping
-    public ResponseEntity<?> listarTodos () {
+    public ResponseEntity<List<Usuario>> listarTodos () {
 
         return ResponseEntity.ok(usuarioRepository.findAll());
     }
