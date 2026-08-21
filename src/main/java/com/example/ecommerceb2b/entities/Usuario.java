@@ -1,5 +1,6 @@
 package com.example.ecommerceb2b.entities;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
