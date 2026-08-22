@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/empresas")
-@Tag(name= "Métodos de Usuários", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de usuários do sistema!")
+@Tag(name= "Métodos de Empresas", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de empresas do sistema!")
 public class EmpresaController {
     @Autowired
     private EmpresaRepository empresaRepository;

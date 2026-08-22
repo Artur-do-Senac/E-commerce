@@ -5,6 +5,7 @@ import com.example.ecommerceb2b.entities.Produto;
 import com.example.ecommerceb2b.repository.PedidoRepository;
 import com.example.ecommerceb2b.repository.ProdutoRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
+@Tag(name= "Métodos de Produtos", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de produtos do sistema!")
 public class ProdutoController {
 
     @Autowired
