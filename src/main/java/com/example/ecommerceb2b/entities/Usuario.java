@@ -17,9 +17,10 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-    public String nome;
-    public String cpf;
-    public String senha;
-    public String email;
+    private Long id;
+    private String nome;
+    private String cpf;
+    private String senha;
+    private String email;
+    private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
 }

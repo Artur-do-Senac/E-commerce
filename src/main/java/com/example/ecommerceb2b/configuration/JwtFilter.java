@@ -18,14 +18,14 @@ public class JwtFilter extends OncePerRequestFilter {
     private TokenService tokenService;
 
     @Override
-    protected  void doFilterInteral(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String uri = request.getRequestURI();
 
         if(uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
-                || uri.startsWith("/swagge-resoucers")
+                || uri.startsWith("/swagger-resoucers")
                 || uri.startsWith("/webjars")
                 || uri.startsWith("/auth")
         ){
@@ -33,10 +33,10 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String authHeader = request.getHeader("Autorization");
+        String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")){
-            String token = authHeader.replace("Bearer", "");
+            String token = authHeader.replace("Bearer ", "");
 
             try {
                 var jwtValidate = tokenService.verificadorToken(token);
