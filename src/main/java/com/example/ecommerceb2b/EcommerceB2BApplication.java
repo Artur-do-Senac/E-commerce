@@ -9,8 +9,7 @@ public class EcommerceB2BApplication {
     public static void main(String[] args) {
         SpringApplication.run(EcommerceB2BApplication.class, args);
 
-        System.out.println("Testinho");
+        System.out.println("-------- Rodando --------");
 
     }
-
 }
