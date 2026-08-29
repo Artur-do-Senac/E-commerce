@@ -1,6 +1,8 @@
 package com.example.ecommerceb2b.controllers;
 
 import com.example.ecommerceb2b.DTOs.LoginRequest;
+import com.example.ecommerceb2b.DTOs.LoginResponse;
+import com.example.ecommerceb2b.repository.UsuarioRepository;
 import com.example.ecommerceb2b.services.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,18 +23,20 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     @PostMapping("/login")
     @Operation(summary = "Autenticação de usuários", description = "Método de login")
-    public ResponseEntity<?> Login (@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<?> login (@RequestBody LoginRequest request){
 
-        if (loginRequest.email().equals("string") && loginRequest.senha().equals("string")){
+        if (usuarioRepository.existsUsuarioByEmailAndSenha(request.email(), request.senha())){
 
-            //Gerar token
-            var token = tokenService.gerarToken(loginRequest.email());
+            var token = tokenService.gerarToken(request.email());
 
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(new LoginResponse(token));
         }
 
-        return ResponseEntity.status(HttpURLConnection.HTTP_UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpURLConnection.HTTP_UNAUTHORIZED).body("Usuário e/ou senha inválidos");
     }
 }
