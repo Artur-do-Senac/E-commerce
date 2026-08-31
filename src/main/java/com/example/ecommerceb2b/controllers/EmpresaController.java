@@ -1,11 +1,7 @@
 package com.example.ecommerceb2b.controllers;
 
-import com.example.ecommerceb2b.DTOs.AtualizarStatusRequest;
+import com.example.ecommerceb2b.DTOs.AttStatusRequest;
 import com.example.ecommerceb2b.entities.Empresa;
-import com.example.ecommerceb2b.entities.Pedido;
-import com.example.ecommerceb2b.entities.Empresa;
-import com.example.ecommerceb2b.repository.EmpresaRepository;
-import com.example.ecommerceb2b.repository.PedidoRepository;
 import com.example.ecommerceb2b.repository.EmpresaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/empresas")
-@Tag(name= "Métodos de Usuários", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de usuários do sistema!")
+@Tag(name= "Métodos de Empresas", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de empresas do sistema!")
 public class EmpresaController {
 
     @Autowired
@@ -26,13 +22,14 @@ public class EmpresaController {
 
 
     @GetMapping
-    @Operation(summary = "Lista todos os usuários", description = "Retorna uma lista completa dos usuários cadastrados no sistema.")
+    @Operation(summary = "Lista todas as empresas", description = "Retorna uma lista completa das empresas cadastrados no sistema.")
     public ResponseEntity<List<Empresa>> listarTodos() {
 
         return ResponseEntity.ok(empresaRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
     public ResponseEntity<Empresa> buscarPorId(@PathVariable Long id) {
         Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
 
@@ -43,7 +40,7 @@ public class EmpresaController {
     }
 
     @PostMapping
-    @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
+    @Operation(summary = "Cria uma nova empresa", description = "Cria um novo registro de empresa no sistema")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Empresa> criar(@RequestBody Empresa empresa) {
         var empresaBanco = empresaRepository.save(empresa);
@@ -51,12 +48,13 @@ public class EmpresaController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest) {
+    @Operation(summary = "Atualiza o status", description = "Atualiza status de empresa no sistema")
+    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
 
         Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
 
         if (empresaBanco != null) {
-            empresaBanco.setStatus(statusRequest.status());
+            empresaBanco.setStatus(statusRequest.statusUsuario());
             empresaRepository.save(empresaBanco);
 
             return ResponseEntity.ok().build();
@@ -65,6 +63,7 @@ public class EmpresaController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
     public ResponseEntity<Empresa> atualizarEmpresa(@PathVariable Long id, @RequestBody Empresa empresa) {
 
         try {
@@ -86,6 +85,7 @@ public class EmpresaController {
     }
 
     @DeleteMapping("/{id}/excluir")
+    @Operation(summary = "Deleta o registro por ID", description = "Deleta o registro por ID no sistema")
     public ResponseEntity<Void> deletarEmpresa(@PathVariable Long id) {
         empresaRepository.deleteById(id);
         return ResponseEntity.ok().build();

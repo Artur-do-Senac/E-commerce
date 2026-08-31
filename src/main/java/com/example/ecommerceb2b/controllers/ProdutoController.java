@@ -1,6 +1,6 @@
 package com.example.ecommerceb2b.controllers;
 
-import com.example.ecommerceb2b.DTOs.AtualizarStatusRequest;
+import com.example.ecommerceb2b.DTOs.AttStatusRequest;
 import com.example.ecommerceb2b.entities.Produto;
 import com.example.ecommerceb2b.repository.ProdutoRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
-@Tag(name= "Métodos de Usuários", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de usuários do sistema!")
+@Tag(name= "Métodos de Produtos", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de produtos do sistema!")
 public class ProdutoController {
 
     @Autowired
@@ -22,13 +22,14 @@ public class ProdutoController {
 
 
     @GetMapping
-    @Operation(summary = "Lista todos os usuários", description = "Retorna uma lista completa dos usuários cadastrados no sistema.")
+    @Operation(summary = "Lista todos os produtos", description = "Retorna uma lista completa dos produtos cadastrados no sistema.")
     public ResponseEntity<List<Produto>> listarTodos() {
 
         return ResponseEntity.ok(produtoRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
     public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
         Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
@@ -39,7 +40,7 @@ public class ProdutoController {
     }
 
     @PostMapping
-    @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
+    @Operation(summary = "Cria um novo produto", description = "Cria um novo registro de produto no sistema")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Produto> criar(@RequestBody Produto produto) {
         var produtoBanco = produtoRepository.save(produto);
@@ -47,12 +48,13 @@ public class ProdutoController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest) {
+    @Operation(summary = "Atualiza o status", description = "Atualiza status de produto no sistema")
+    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
 
         Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
         if (produtoBanco != null) {
-            produtoBanco.setStatus(statusRequest.status());
+            produtoBanco.setStatus(statusRequest.statusUsuario());
             produtoRepository.save(produtoBanco);
 
             return ResponseEntity.ok().build();
@@ -61,6 +63,7 @@ public class ProdutoController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
     public ResponseEntity<Produto> atualizarProduto(@PathVariable Long id, @RequestBody Produto produto) {
 
         try {
@@ -83,6 +86,7 @@ public class ProdutoController {
     }
 
     @DeleteMapping("/{id}/excluir")
+    @Operation(summary = "Deleta o registro por ID", description = "Deleta o registro por ID no sistema")
     public ResponseEntity<Void> deletarProduto(@PathVariable Long id) {
         produtoRepository.deleteById(id);
         return ResponseEntity.ok().build();
