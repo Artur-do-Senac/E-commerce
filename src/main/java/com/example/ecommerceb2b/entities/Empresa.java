@@ -20,4 +20,5 @@ public class Empresa {
     public Long id;
     public String razaoSocial;
     public String cnpj;
+    private EnumStatus status = EnumStatus.ATIVO;
 }

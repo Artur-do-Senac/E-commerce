@@ -1,8 +1,7 @@
 package com.example.ecommerceb2b.DTOs;
 
-import com.example.ecommerceb2b.entities.EnumStatusUsuario;
-import lombok.Data;
+import com.example.ecommerceb2b.entities.EnumStatus;
 
 
-public record AtualizarStatusRequest(EnumStatusUsuario status) {
+public record AtualizarStatusRequest(EnumStatus status) {
 }

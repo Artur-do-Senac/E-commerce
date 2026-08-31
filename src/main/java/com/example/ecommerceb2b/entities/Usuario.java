@@ -1,6 +1,5 @@
 package com.example.ecommerceb2b.entities;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,5 +21,5 @@ public class Usuario {
     private String cpf;
     private String senha;
     private String email;
-    private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
+    private EnumStatus status = EnumStatus.ATIVO;
 }

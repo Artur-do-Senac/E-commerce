@@ -1,7 +1,6 @@
 package com.example.ecommerceb2b.controllers;
 
 import com.example.ecommerceb2b.DTOs.AtualizarStatusRequest;
-import com.example.ecommerceb2b.entities.EnumStatusUsuario;
 import com.example.ecommerceb2b.entities.Usuario;
 import com.example.ecommerceb2b.repository.UsuarioRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +23,7 @@ public class UsuarioController {
 
     @GetMapping
     @Operation(summary = "Lista todos os usuários", description = "Retorna uma lista completa dos usuários cadastrados no sistema.")
-    public ResponseEntity<List<Usuario>> listarTodos () {
+    public ResponseEntity<List<Usuario>> listarTodos() {
 
         return ResponseEntity.ok(usuarioRepository.findAll());
     }
@@ -42,17 +41,17 @@ public class UsuarioController {
     @PostMapping
     @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario){
+    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario) {
         var usuarioBanco = usuarioRepository.save(usuario);
         return ResponseEntity.ok(usuarioBanco);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest){
+    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest) {
 
         Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
 
-        if (usuarioBanco != null){
+        if (usuarioBanco != null) {
             usuarioBanco.setStatus(statusRequest.status());
             usuarioRepository.save(usuarioBanco);
 
@@ -62,12 +61,12 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario){
+    public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
 
         try {
             Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
 
-            if (usuarioBanco != null){
+            if (usuarioBanco != null) {
                 usuarioBanco.setStatus(usuario.getStatus());
                 usuarioBanco.setNome(usuario.getNome());
                 usuarioBanco.setEmail(usuario.getEmail());
@@ -85,24 +84,8 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}/excluir")
-    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id){
+    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         usuarioRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
-
- /*
-    @DeleteMapping("/{id}/excluir")
-    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id){
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
-
-        if (usuarioBanco != null){
-            usuarioBanco.setStatus(EnumStatusUsuario.INATIVO);
-            usuarioRepository.save(usuarioBanco);
-
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
- */
-
 }

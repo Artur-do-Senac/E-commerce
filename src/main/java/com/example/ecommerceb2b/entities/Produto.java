@@ -21,4 +21,5 @@ public class Produto {
     public String nome;
     public Double preco;
     public Date vencimento;
+    private EnumStatus status = EnumStatus.ATIVO;
 }
