@@ -21,5 +21,5 @@ public class Usuario {
     private String cpf;
     private String senha;
     private String email;
-    private EnumStatus status = EnumStatus.ATIVO;
+    private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
 }

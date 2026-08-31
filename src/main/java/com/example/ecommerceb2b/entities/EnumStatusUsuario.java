@@ -1,6 +1,6 @@
 package com.example.ecommerceb2b.entities;
 
-public enum EnumStatus {
+public enum EnumStatusUsuario {
     ATIVO,
     BLOQUEADO,
     INATIVO

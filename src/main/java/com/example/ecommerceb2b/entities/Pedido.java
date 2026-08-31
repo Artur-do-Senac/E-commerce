@@ -24,5 +24,5 @@ public class Pedido {
     public BigDecimal valorTotal;
     public LocalDateTime data;
     public BigDecimal desconto;
-    private EnumStatus status = EnumStatus.ATIVO;
+    private EnumStatusPedido status = EnumStatusPedido.PENDENTE;
 }

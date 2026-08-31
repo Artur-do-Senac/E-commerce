@@ -2,13 +2,9 @@ package com.example.ecommerceb2b.controllers;
 
 import com.example.ecommerceb2b.DTOs.AtualizarStatusRequest;
 import com.example.ecommerceb2b.entities.Pedido;
-import com.example.ecommerceb2b.entities.Pedido;
-import com.example.ecommerceb2b.entities.Usuario;
-import com.example.ecommerceb2b.repository.PedidoRepository;
 import com.example.ecommerceb2b.repository.PedidoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
