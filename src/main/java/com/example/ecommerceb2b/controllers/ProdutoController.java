@@ -1,6 +1,6 @@
 package com.example.ecommerceb2b.controllers;
 
-import com.example.ecommerceb2b.DTOs.AttStatusRequest;
+import com.example.ecommerceb2b.DTOs.AttStatusProdutoRequest;
 import com.example.ecommerceb2b.entities.Produto;
 import com.example.ecommerceb2b.repository.ProdutoRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,12 +49,12 @@ public class ProdutoController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de produto no sistema")
-    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
+    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusProdutoRequest statusRequest) {
 
         Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
         if (produtoBanco != null) {
-            produtoBanco.setStatus(statusRequest.statusUsuario());
+            produtoBanco.setStatus(statusRequest.statusProduto());
             produtoRepository.save(produtoBanco);
 
             return ResponseEntity.ok().build();
@@ -74,6 +74,7 @@ public class ProdutoController {
                 produtoBanco.setNome(produto.getNome());
                 produtoBanco.setPreco(produto.getPreco());
                 produtoBanco.setVencimento(produto.getVencimento());
+                produtoBanco.setQuantidadeEstoque(produto.getQuantidadeEstoque());
                 produtoRepository.save(produtoBanco);
 
                 return ResponseEntity.ok().build();

@@ -20,5 +20,5 @@ public class Empresa {
     public Long id;
     public String razaoSocial;
     public String cnpj;
-    private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
+    private EnumStatusEmpresa status = EnumStatusEmpresa.ATIVO;
 }

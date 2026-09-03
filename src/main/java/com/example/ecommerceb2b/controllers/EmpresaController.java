@@ -1,6 +1,6 @@
 package com.example.ecommerceb2b.controllers;
 
-import com.example.ecommerceb2b.DTOs.AttStatusRequest;
+import com.example.ecommerceb2b.DTOs.AttStatusEmpresaRequest;
 import com.example.ecommerceb2b.entities.Empresa;
 import com.example.ecommerceb2b.repository.EmpresaRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,12 +49,12 @@ public class EmpresaController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de empresa no sistema")
-    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
+    public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusEmpresaRequest statusRequest) {
 
         Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
 
         if (empresaBanco != null) {
-            empresaBanco.setStatus(statusRequest.statusUsuario());
+            empresaBanco.setStatus(statusRequest.statusEmpresa());
             empresaRepository.save(empresaBanco);
 
             return ResponseEntity.ok().build();

@@ -1,7 +1,10 @@
 package com.example.ecommerceb2b.controllers;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.example.ecommerceb2b.DTOs.EsqueciSenhaRequest;
 import com.example.ecommerceb2b.DTOs.LoginRequest;
 import com.example.ecommerceb2b.DTOs.LoginResponse;
+import com.example.ecommerceb2b.DTOs.RedefinirSenhaRequest;
 import com.example.ecommerceb2b.repository.UsuarioRepository;
 import com.example.ecommerceb2b.services.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,5 +41,44 @@ public class AuthController {
         }
 
         return ResponseEntity.status(HttpURLConnection.HTTP_UNAUTHORIZED).body("Usuário e/ou senha inválidos");
+    }
+
+    @PostMapping("/esqueci-senha")
+    @Operation(summary = "Esqueci minha senha", description = "Gera um token de redefinição de senha para o e-mail informado")
+    public ResponseEntity<?> esqueciSenha(@RequestBody EsqueciSenhaRequest senhaRequest) {
+
+        var usuarioBanco = usuarioRepository.findByEmail(senhaRequest.email());
+
+        if (usuarioBanco.isPresent()) {
+            var token = tokenService.gerarToken(senhaRequest.email());
+
+            return ResponseEntity.ok(new LoginResponse(token));
+        }
+
+        return ResponseEntity.status(HttpURLConnection.HTTP_NOT_FOUND).body("Usuário não encontrado");
+    }
+
+    @PostMapping("/redefinir-senha")
+    @Operation(summary = "Redefinir senha", description = "Atualiza a senha do usuário a partir de um token de redefinição válido")
+    public ResponseEntity<?> redefinirSenha(@RequestBody RedefinirSenhaRequest request) {
+
+        try {
+            var jwt = tokenService.verificadorToken(request.token());
+
+            var usuarioBanco = usuarioRepository.findByEmail(jwt.getSubject());
+
+            if (usuarioBanco.isPresent()) {
+                var usuario = usuarioBanco.get();
+                usuario.setSenha(request.novaSenha());
+                usuarioRepository.save(usuario);
+
+                return ResponseEntity.ok().build();
+            }
+
+            return ResponseEntity.status(HttpURLConnection.HTTP_NOT_FOUND).body("Usuário não encontrado");
+
+        } catch (JWTVerificationException e) {
+            return ResponseEntity.status(HttpURLConnection.HTTP_UNAUTHORIZED).body("Token inválido ou expirado");
+        }
     }
 }

@@ -21,5 +21,6 @@ public class Produto {
     public String nome;
     public Double preco;
     public Date vencimento;
-    private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
+    public Integer quantidadeEstoque;
+    private EnumStatusProduto status = EnumStatusProduto.NA_VALIDADE;
 }
