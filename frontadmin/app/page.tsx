@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 const navLinks = [
@@ -129,12 +130,12 @@ export default function Home() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            <button
-              type="button"
+            <Link
+              href="/login"
               className="inline-flex items-center justify-center rounded-full border border-primary-200 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
             >
               Entrar
-            </button>
+            </Link>
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-accent-500/30 transition hover:bg-accent-600"
@@ -169,12 +170,13 @@ export default function Home() {
               ))}
             </nav>
             <div className="mt-5 flex flex-col gap-3">
-              <button
-                type="button"
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
                 className="inline-flex items-center justify-center rounded-full border border-primary-200 px-5 py-2.5 text-sm font-semibold text-primary-700"
               >
                 Entrar
-              </button>
+              </Link>
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white"
@@ -384,12 +386,12 @@ export default function Home() {
               >
                 Criar conta grátis
               </button>
-              <button
-                type="button"
+              <Link
+                href="/login"
                 className="inline-flex items-center justify-center rounded-full border border-primary-700 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-900"
               >
                 Entrar
-              </button>
+              </Link>
             </div>
           </div>
         </section>
