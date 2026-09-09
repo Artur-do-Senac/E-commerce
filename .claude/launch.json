@@ -4,7 +4,7 @@
     {
       "name": "front",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "front", "--", "-p", "3100"],
+      "runtimeArgs": ["run", "dev", "--prefix", "frontadmin", "--", "-p", "3100"],
       "port": 3100
     }
   ]
