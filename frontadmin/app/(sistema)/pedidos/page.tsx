@@ -1,9 +1,33 @@
+'use client'
+
+import { Pedido } from "@/app/types/pedido";
+import axios from "axios";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Pedidos() {
-    const pedidos = [
-        { id: 1, data: "09/09/2026 às 14:30", valorTotal: "R$ 1.250,00", desconto: "R$ 50,00", status: "PENDENTE" },
-    ];
+
+    const [pedidos, setPedidos] = useState<Pedido[]>([])
+
+    useEffect(()=>{
+        carregarDados();
+    },[]);
+
+    const carregarDados = async ()=>{
+
+        try {
+            const dados = await axios.get<Pedido[]>("http://localhost:8080/pedidos")
+
+            setPedidos(dados.data);
+        } catch (error) {
+            alert("Erro ao carregar dados")
+        }
+
+    }
+
+    const formatarMoeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    const formatarData = (data: string) => new Date(data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
     const statusLabels: Record<string, string> = {
         CONCLUIDO: "Concluído",
@@ -52,9 +76,9 @@ export default function Pedidos() {
                                 {pedidos.map((pedido) => (
                                     <tr key={pedido.id} className="transition hover:bg-slate-50">
                                         <td className="px-6 py-4 font-medium text-slate-800">#{String(pedido.id).padStart(4, "0")}</td>
-                                        <td className="px-6 py-4 text-slate-600">{pedido.data}</td>
-                                        <td className="px-6 py-4 text-slate-600">{pedido.valorTotal}</td>
-                                        <td className="px-6 py-4 text-slate-600">{pedido.desconto}</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatarData(pedido.data)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatarMoeda(pedido.valorTotal)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatarMoeda(pedido.desconto)}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[pedido.status]}`}>
                                                 {statusLabels[pedido.status]}
@@ -68,6 +92,16 @@ export default function Pedidos() {
                                         </td>
                                     </tr>
                                 ))}
+
+                                {
+                                    pedidos.length === 0 &&(
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center">
+                                                Nenhum pedido encontrado
+                                            </td>
+                                        </tr>
+                                    )
+                                }
                             </tbody>
                         </table>
                     </div>

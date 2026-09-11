@@ -1,9 +1,33 @@
+'use client'
+
+import { Produto } from "@/app/types/produto";
+import axios from "axios";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Produtos() {
-    const produtos = [
-        { id: 1, nome: "Caixa de Parafusos", preco: "R$ 45,90", quantidadeEstoque: "120 un.", vencimento: "12/12/2026", status: "NA_VALIDADE" },
-    ];
+
+    const [produtos, setProdutos] = useState<Produto[]>([])
+
+    useEffect(()=>{
+        carregarDados();
+    },[]);
+
+    const carregarDados = async ()=>{
+
+        try {
+            const dados = await axios.get<Produto[]>("http://localhost:8080/produtos")
+
+            setProdutos(dados.data);
+        } catch (error) {
+            alert("Erro ao carregar dados")
+        }
+
+    }
+
+    const formatarMoeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    const formatarData = (data: string) => new Date(data).toLocaleDateString("pt-BR");
 
     const statusLabels: Record<string, string> = {
         NA_VALIDADE: "Na validade",
@@ -50,9 +74,9 @@ export default function Produtos() {
                                 {produtos.map((produto) => (
                                     <tr key={produto.id} className="transition hover:bg-slate-50">
                                         <td className="px-6 py-4 font-medium text-slate-800">{produto.nome}</td>
-                                        <td className="px-6 py-4 text-slate-600">{produto.preco}</td>
-                                        <td className="px-6 py-4 text-slate-600">{produto.quantidadeEstoque}</td>
-                                        <td className="px-6 py-4 text-slate-600">{produto.vencimento}</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatarMoeda(produto.preco)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{produto.quantidadeEstoque} un.</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatarData(produto.vencimento)}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[produto.status]}`}>
                                                 {statusLabels[produto.status]}
@@ -66,6 +90,16 @@ export default function Produtos() {
                                         </td>
                                     </tr>
                                 ))}
+
+                                {
+                                    produtos.length === 0 &&(
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center">
+                                                Nenhum produto encontrado
+                                            </td>
+                                        </tr>
+                                    )
+                                }
                             </tbody>
                         </table>
                     </div>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from "next/navigation"
+import axios from "axios";
+import { LoginResponse } from "../types/auth";
 
 
 export default function Login(){
@@ -8,14 +10,27 @@ export default function Login(){
 
 
     const handleLogin = async(formData:FormData) =>{
-        
 
-        router.push("/home")
+        try{
+            debugger;
+            const emailTela = formData.get("email")?.toString() ?? "";
+            const senhaTela = formData.get("senha")?.toString() ?? "";
+            
+            var loginResposta = await axios.post<LoginResponse>("http://localhost:8080/auth/login", {email: emailTela, senha: senhaTela});
+            
+    
+            if (loginResposta.status == 200){
+                router.push("/home")
+            }
+            else {
+                alert("Usuário e/ou senha inválidos!")
+            }
+        }catch(e){
+            alert("Usuário e/ou senha inválidos!")
 
+        }      
 
     }
-
-
 
     return(<>
     <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-primary-950 px-4 py-16 before:absolute before:-left-24 before:-top-24 before:h-72 before:w-72 before:rounded-full before:bg-accent-500/30 before:blur-3xl before:content-[''] after:absolute after:-bottom-24 after:-right-24 after:h-72 after:w-72 after:rounded-full after:bg-primary-500/40 after:blur-3xl after:content-['']">

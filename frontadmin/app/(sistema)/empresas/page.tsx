@@ -1,9 +1,29 @@
+'use client'
+
+import { Empresa } from "@/app/types/empresa";
+import axios from "axios";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Empresas() {
-    const empresas = [
-        { id: 1, razaoSocial: "Comércio Exemplo Ltda", cnpj: "12.345.678/0001-90", status: "ATIVO" },
-    ];
+
+    const [empresas, setEmpresas] = useState<Empresa[]>([])
+
+    useEffect(()=>{
+        carregarDados();
+    },[]);
+
+    const carregarDados = async ()=>{
+
+        try {
+            const dados = await axios.get<Empresa[]>("http://localhost:8080/empresas")
+
+            setEmpresas(dados.data);
+        } catch (error) {
+            alert("Erro ao carregar dados")
+        }
+
+    }
 
     const statusLabels: Record<string, string> = {
         ATIVO: "Ativo",
@@ -64,6 +84,16 @@ export default function Empresas() {
                                         </td>
                                     </tr>
                                 ))}
+
+                                {
+                                    empresas.length === 0 &&(
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-12 text-center">
+                                                Nenhuma empresa encontrada
+                                            </td>
+                                        </tr>
+                                    )
+                                }
                             </tbody>
                         </table>
                     </div>
