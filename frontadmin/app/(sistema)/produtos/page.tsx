@@ -40,7 +40,7 @@ export default function Produtos() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-slate-50">
+        <div className="w-full flex-1 bg-slate-50">
             <div className="flex flex-col gap-4 px-8 pt-10 pb-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="bg-gradient-to-r from-primary-900 to-primary-600 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
@@ -84,7 +84,7 @@ export default function Produtos() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-4">
-                                                <Link href={`/produtos/${produto.id}`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
+                                                <Link href={`/produtos/${produto.id}/editar`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
                                                 <button className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
                                             </div>
                                         </td>
