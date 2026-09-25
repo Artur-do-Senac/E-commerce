@@ -1,13 +1,39 @@
 'use client'
 import Link from "next/link";
 import UsuarioForm from "../../components/UsuarioForm";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Usuario } from "@/app/types/usuario";
+import axios from "axios";
 
 export default function EditarUsuario(){
+
+    const router = useRouter();
 
     const parametro = useParams();
 
     const codigo = Number(parametro.codigo);
+
+    const [usuario, setUsuario] = useState<Usuario | null>(null)
+
+    useEffect(()=> {
+
+        buscarDados();
+        
+    }, []);
+
+    const buscarDados = async() => {
+
+        try {
+            const valorUsuarioBack = await axios.get<Usuario>('http://localhost:8080/usuarios/'+codigo);
+            setUsuario(valorUsuarioBack.data)
+        } catch (error) {
+            alert("Usuário não encontrado!")
+            router.push("/usuarios")
+        }
+    }
+
+    if (!usuario) return(<div className="p-8"> Carregando dados...</div>)
 
     return(<>
 
@@ -24,7 +50,7 @@ export default function EditarUsuario(){
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                    <UsuarioForm/>
+                    <UsuarioForm usuarioExistente = {usuario}/>
                 </div>
 
             </div>

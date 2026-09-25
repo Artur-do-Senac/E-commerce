@@ -1,29 +1,89 @@
+'use client'
+
+import { Usuario, UsuarioFormProp } from "@/app/types/usuario";
+import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function UsuarioForm(){
+export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
 
+    const router = useRouter();
 
+    const [usuario, setUsuario] = useState<Usuario>(usuarioExistente ?? new Usuario(null, "", "", "ATIVO", "", ""));
+    
+    const handlerChange = ( campo : 'nome' | 'email' | 'cpf' | 'senha', valor : string) =>{
+        setUsuario(valorAnterior => new Usuario(valorAnterior.id, 
+            campo === 'nome' ? valor : valorAnterior.nome, 
+            campo === 'email' ? valor : valorAnterior.email,
+            valorAnterior.status,
+            campo === 'cpf' ? valor : valorAnterior.cpf,
+            campo === 'senha' ? valor : valorAnterior.senha
+            )        
+        )
+    }
+
+    const handlerSalvar = async (formData : FormData) => {
+        try {
+            if (usuario.id) {
+                await axios.put('http://localhost:8080/usuarios/'+usuario.id, usuario)
+            } else {
+                await axios.post('http://localhost:8080/usuarios', usuario)
+            }
+            alert("Usuário foi salvo com sucesso!");
+        } catch (error) {
+            alert("Erro ao salvar usuário");
+            return;
+        }
+
+        router.push("/usuarios")
+    }
 
 
     return (<>
 
-    <form className="w-full">
+    <form action={handlerSalvar} className="w-full">
         <div className="flex flex-col gap-6">
             <div className="group flex flex-col gap-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">Nome Completo: </label>
-                <input name="Nome" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+                <input 
+                name="Nome"
+                value={usuario.nome}
+                required
+                placeholder="Alcione Salomão..."
+                onChange={(e) => handlerChange('nome', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
             </div>
             <div className="group flex flex-col gap-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">CPF: </label>
-                <input name="CPF" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+                <input 
+                name="CPF"
+                required
+                placeholder="000.000.000-00"
+                value={usuario.cpf}
+                onChange={(e) => handlerChange('cpf', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
             </div>
             <div className="group flex flex-col gap-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">E-mail: </label>
-                <input name="email" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+                <input 
+                name="email"
+                value={usuario.email}
+                required
+                placeholder="email@email.com"
+                onChange={(e) => handlerChange('email', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
             </div>
             <div className="group flex flex-col gap-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">Senha: </label>
-                <input name="senha" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+                <input 
+                name="senha"
+                value={usuario.senha}
+                required
+                placeholder="*******"
+                type="password"
+                onChange={(e) => handlerChange('senha', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
             </div>
 
 
