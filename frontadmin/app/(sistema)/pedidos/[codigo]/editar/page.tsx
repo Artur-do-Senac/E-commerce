@@ -1,13 +1,39 @@
 'use client'
 import Link from "next/link";
 import PedidoForm from "../../components/PedidoForm";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Pedido } from "@/app/types/pedido";
+import axios from "axios";
 
 export default function EditarPedido(){
+
+    const router = useRouter();
 
     const parametro = useParams();
 
     const codigo = Number(parametro.codigo);
+
+    const [pedido, setPedido] = useState<Pedido | null>(null)
+
+    const buscarDados = async() => {
+
+        try {
+            const valorPedidoBack = await axios.get<Pedido>('http://localhost:8080/pedidos/'+codigo);
+            setPedido(valorPedidoBack.data)
+        } catch (error) {
+            alert("Pedido não encontrado!")
+            router.push("/pedidos")
+        }
+    }
+
+    useEffect(()=> {
+
+        buscarDados();
+
+    }, []);
+
+    if (!pedido) return(<div className="p-8"> Carregando dados...</div>)
 
     return(<>
 
@@ -24,7 +50,7 @@ export default function EditarPedido(){
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                    <PedidoForm/>
+                    <PedidoForm pedidoExistente = {pedido}/>
                 </div>
 
             </div>

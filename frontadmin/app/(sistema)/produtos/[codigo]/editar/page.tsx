@@ -1,13 +1,39 @@
 'use client'
 import Link from "next/link";
 import ProdutoForm from "../../components/ProdutoForm";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Produto } from "@/app/types/produto";
+import axios from "axios";
 
 export default function EditarProduto(){
+
+    const router = useRouter();
 
     const parametro = useParams();
 
     const codigo = Number(parametro.codigo);
+
+    const [produto, setProduto] = useState<Produto | null>(null)
+
+    const buscarDados = async() => {
+
+        try {
+            const valorProdutoBack = await axios.get<Produto>('http://localhost:8080/produtos/'+codigo);
+            setProduto(valorProdutoBack.data)
+        } catch (error) {
+            alert("Produto não encontrado!")
+            router.push("/produtos")
+        }
+    }
+
+    useEffect(()=> {
+
+        buscarDados();
+
+    }, []);
+
+    if (!produto) return(<div className="p-8"> Carregando dados...</div>)
 
     return(<>
 
@@ -24,7 +50,7 @@ export default function EditarProduto(){
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                    <ProdutoForm/>
+                    <ProdutoForm produtoExistente = {produto}/>
                 </div>
 
             </div>

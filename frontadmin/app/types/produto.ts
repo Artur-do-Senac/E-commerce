@@ -11,3 +11,7 @@ export class Produto {
 
     }
 }
+
+export interface ProdutoFormProp{
+    produtoExistente?:Produto
+}

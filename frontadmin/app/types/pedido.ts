@@ -10,3 +10,7 @@ export class Pedido {
 
     }
 }
+
+export interface PedidoFormProp{
+    pedidoExistente?:Pedido
+}

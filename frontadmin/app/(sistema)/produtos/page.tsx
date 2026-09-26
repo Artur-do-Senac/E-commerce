@@ -25,9 +25,22 @@ export default function Produtos() {
 
     }
 
+    const handlerDeletarProduto = async(produto: Produto)=> {
+        try {
+            await axios.delete('http://localhost:8080/produtos/'+produto.id+'/excluir')
+            alert("Produto foi excluído com sucesso!");
+        } catch (error) {
+            alert("Erro ao excluir produto");
+            return;
+        }
+
+        carregarDados();
+    }
+
     const formatarMoeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-    const formatarData = (data: string) => new Date(data).toLocaleDateString("pt-BR");
+    // usa só "aaaa-mm-dd" para o fuso horário não recuar o dia (ex.: 00:00 UTC vira o dia anterior no Brasil)
+    const formatarData = (data: string) => new Date(data.slice(0, 10) + "T00:00:00").toLocaleDateString("pt-BR");
 
     const statusLabels: Record<string, string> = {
         NA_VALIDADE: "Na validade",
@@ -85,7 +98,7 @@ export default function Produtos() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-4">
                                                 <Link href={`/produtos/${produto.id}/editar`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
-                                                <button className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
+                                                <button onClick={() => handlerDeletarProduto(produto)} className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
                                             </div>
                                         </td>
                                     </tr>

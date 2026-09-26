@@ -25,6 +25,18 @@ export default function Pedidos() {
 
     }
 
+    const handlerDeletarPedido = async(pedido: Pedido)=> {
+        try {
+            await axios.delete('http://localhost:8080/pedidos/'+pedido.id+'/excluir')
+            alert("Pedido foi excluído com sucesso!");
+        } catch (error) {
+            alert("Erro ao excluir pedido");
+            return;
+        }
+
+        carregarDados();
+    }
+
     const formatarMoeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
     const formatarData = (data: string) => new Date(data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -87,7 +99,7 @@ export default function Pedidos() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-4">
                                                 <Link href={`/pedidos/${pedido.id}/editar`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
-                                                <button className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
+                                                <button onClick={() => handlerDeletarPedido(pedido)} className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
                                             </div>
                                         </td>
                                     </tr>

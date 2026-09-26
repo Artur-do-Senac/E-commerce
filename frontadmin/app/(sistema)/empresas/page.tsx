@@ -25,6 +25,18 @@ export default function Empresas() {
 
     }
 
+    const handlerDeletarEmpresa = async(empresa: Empresa)=> {
+        try {
+            await axios.delete('http://localhost:8080/empresas/'+empresa.id+'/excluir')
+            alert("Empresa foi excluída com sucesso!");
+        } catch (error) {
+            alert("Erro ao excluir empresa");
+            return;
+        }
+
+        carregarDados();
+    }
+
     const statusLabels: Record<string, string> = {
         ATIVO: "Ativo",
         BLOQUEADO: "Bloqueado",
@@ -79,7 +91,7 @@ export default function Empresas() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-4">
                                                 <Link href={`/empresas/${empresa.id}/editar`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
-                                                <button className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
+                                                <button onClick={() => handlerDeletarEmpresa(empresa)} className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
                                             </div>
                                         </td>
                                     </tr>

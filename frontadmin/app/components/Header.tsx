@@ -1,7 +1,14 @@
+'use client'
 
+import { useRouter } from "next/navigation";
 
 export default function Header(){
 
+    const router = useRouter();
+
+    const handlerSair = () => {
+        router.push("/login")
+    }
 
     return(<>
 
@@ -16,7 +23,7 @@ export default function Header(){
                     </div>
                     <span className="text-sm font-semibold tracking-tight text-slate-700"> Usuário Artur Seixas</span>
                 </div>
-                <button className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-accent-500 hover:bg-accent-100 hover:text-accent-600 focus:outline-none focus:ring-4 focus:ring-accent-100 active:scale-[0.98]">Sair</button>
+                <button onClick={handlerSair} className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-accent-500 hover:bg-accent-100 hover:text-accent-600 focus:outline-none focus:ring-4 focus:ring-accent-100 active:scale-[0.98]">Sair</button>
             </div>
 
         </header>

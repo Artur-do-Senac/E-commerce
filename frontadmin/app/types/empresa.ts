@@ -9,3 +9,7 @@ export class Empresa {
 
     }
 }
+
+export interface EmpresaFormProp{
+    empresaExistente?:Empresa
+}

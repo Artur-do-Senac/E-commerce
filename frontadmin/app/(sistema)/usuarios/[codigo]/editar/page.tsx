@@ -15,13 +15,7 @@ export default function EditarUsuario(){
     const codigo = Number(parametro.codigo);
 
     const [usuario, setUsuario] = useState<Usuario | null>(null)
-
-    useEffect(()=> {
-
-        buscarDados();
-        
-    }, []);
-
+    
     const buscarDados = async() => {
 
         try {
@@ -32,6 +26,13 @@ export default function EditarUsuario(){
             router.push("/usuarios")
         }
     }
+    
+    useEffect(()=> {
+
+        buscarDados();
+        
+    }, []);
+
 
     if (!usuario) return(<div className="p-8"> Carregando dados...</div>)
 

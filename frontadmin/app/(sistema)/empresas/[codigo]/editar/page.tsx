@@ -1,13 +1,39 @@
 'use client'
 import Link from "next/link";
 import EmpresaForm from "../../components/EmpresaForm";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Empresa } from "@/app/types/empresa";
+import axios from "axios";
 
 export default function EditarEmpresa(){
+
+    const router = useRouter();
 
     const parametro = useParams();
 
     const codigo = Number(parametro.codigo);
+
+    const [empresa, setEmpresa] = useState<Empresa | null>(null)
+
+    const buscarDados = async() => {
+
+        try {
+            const valorEmpresaBack = await axios.get<Empresa>('http://localhost:8080/empresas/'+codigo);
+            setEmpresa(valorEmpresaBack.data)
+        } catch (error) {
+            alert("Empresa não encontrada!")
+            router.push("/empresas")
+        }
+    }
+
+    useEffect(()=> {
+
+        buscarDados();
+
+    }, []);
+
+    if (!empresa) return(<div className="p-8"> Carregando dados...</div>)
 
     return(<>
 
@@ -24,7 +50,7 @@ export default function EditarEmpresa(){
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                    <EmpresaForm/>
+                    <EmpresaForm empresaExistente = {empresa}/>
                 </div>
 
             </div>
