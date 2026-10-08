@@ -1,8 +1,8 @@
 package com.example.ecommerceb2b.presentation;
 
 import com.example.ecommerceb2b.application.DTOs.AttStatusProdutoRequest;
+import com.example.ecommerceb2b.application.services.ProdutoService;
 import com.example.ecommerceb2b.domain.entities.Produto;
-import com.example.ecommerceb2b.domain.repository.ProdutoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,29 +12,33 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Camada de Presentation: a Controller só recebe a requisição HTTP, chama o Service e devolve a resposta (status + corpo).
+// Toda a regra de negócio e o acesso ao banco ficam no ProdutoService.
 @RestController
 @RequestMapping("/produtos")
 @Tag(name= "Métodos de Produtos", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de produtos do sistema!")
 public class ProdutoController {
 
     @Autowired
-    private ProdutoRepository produtoRepository;
+    private ProdutoService produtoService;
 
 
     @GetMapping
     @Operation(summary = "Lista todos os produtos", description = "Retorna uma lista completa dos produtos cadastrados no sistema.")
     public ResponseEntity<List<Produto>> listarTodos() {
 
-        return ResponseEntity.ok(produtoRepository.findAll());
+        return ResponseEntity.ok(produtoService.listarTodos());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
     public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
-        Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
-        if (produtoBanco != null) {
-            return ResponseEntity.ok(produtoBanco);
+        var produtoEncontradoPorId = produtoService.buscarProdutoPorIdRetornaProdutoOuNulo(id);
+
+        // O Service retorna null quando o ID não existe, então a Controller responde 404
+        if (produtoEncontradoPorId != null) {
+            return ResponseEntity.ok(produtoEncontradoPorId);
         }
         return ResponseEntity.notFound().build();
     }
@@ -43,20 +47,19 @@ public class ProdutoController {
     @Operation(summary = "Cria um novo produto", description = "Cria um novo registro de produto no sistema")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Produto> criar(@RequestBody Produto produto) {
-        var produtoBanco = produtoRepository.save(produto);
-        return ResponseEntity.ok(produtoBanco);
+
+        var produtoCriado = produtoService.criarProdutoRetornaProdutoCriado(produto);
+        return ResponseEntity.ok(produtoCriado);
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de produto no sistema")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusProdutoRequest statusRequest) {
 
-        Produto produtoBanco = produtoRepository.findById(id).orElse(null);
+        var produtoComStatusAtualizado = produtoService.atualizarStatusProdutoRetornaProdutoOuNulo(id, statusRequest);
 
-        if (produtoBanco != null) {
-            produtoBanco.setStatus(statusRequest.statusProduto());
-            produtoRepository.save(produtoBanco);
-
+        // null significa que não existe produto com esse ID
+        if (produtoComStatusAtualizado != null) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
@@ -66,30 +69,20 @@ public class ProdutoController {
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
     public ResponseEntity<Produto> atualizarProduto(@PathVariable Long id, @RequestBody Produto produto) {
 
-        try {
-            Produto produtoBanco = produtoRepository.findById(id).orElse(null);
+        var produtoAtualizado = produtoService.atualizarProdutoRetornaProdutoOuNulo(id, produto);
 
-            if (produtoBanco != null) {
-                produtoBanco.setStatus(produto.getStatus());
-                produtoBanco.setNome(produto.getNome());
-                produtoBanco.setPreco(produto.getPreco());
-                produtoBanco.setVencimento(produto.getVencimento());
-                produtoBanco.setQuantidadeEstoque(produto.getQuantidadeEstoque());
-                produtoRepository.save(produtoBanco);
-
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.notFound().build();
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        // null significa que não existe produto com esse ID
+        if (produtoAtualizado != null) {
+            return ResponseEntity.ok().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")
     @Operation(summary = "Deleta o registro por ID", description = "Deleta o registro por ID no sistema")
     public ResponseEntity<Void> deletarProduto(@PathVariable Long id) {
-        produtoRepository.deleteById(id);
+
+        produtoService.deletarProdutoPorId(id);
         return ResponseEntity.ok().build();
     }
 }

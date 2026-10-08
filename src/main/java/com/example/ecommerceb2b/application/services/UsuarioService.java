@@ -1,8 +1,10 @@
 package com.example.ecommerceb2b.application.services;
 
+import com.example.ecommerceb2b.application.DTOs.AttStatusRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginResponse;
 import com.example.ecommerceb2b.application.DTOs.UsuarioResponse;
+import com.example.ecommerceb2b.domain.entities.Usuario;
 import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,5 +38,58 @@ public class UsuarioService {
                 .stream()
                 .map(UsuarioResponse::new)
                 .toList();
+    }
+
+    // Busca um usuário pelo ID. Retorna o usuário encontrado ou null quando não existe (a Controller transforma o null em 404)
+    public Usuario buscarUsuarioPorIdRetornaUsuarioOuNulo(Long id) {
+
+        return usuarioRepository.findById(id).orElse(null);
+    }
+
+    // Salva um novo usuário no banco e retorna o usuário já salvo (com o ID gerado)
+    public Usuario criarUsuarioRetornaUsuarioCriado(Usuario usuario) {
+
+        return usuarioRepository.save(usuario);
+    }
+
+    // Atualiza somente o status do usuário. Retorna o usuário atualizado ou null quando o ID não existe
+    public Usuario atualizarStatusUsuarioRetornaUsuarioOuNulo(Long id, AttStatusRequest statusRequest) {
+
+        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+
+        if (usuarioBanco != null) {
+            usuarioBanco.setStatus(statusRequest.statusUsuario());
+
+            return usuarioRepository.save(usuarioBanco);
+        }
+        return null;
+    }
+
+    // Atualiza todos os dados do usuário. Retorna o usuário atualizado ou null quando o ID não existe
+    public Usuario atualizarUsuarioRetornaUsuarioOuNulo(Long id, Usuario usuario) {
+
+        try {
+            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+
+            if (usuarioBanco != null) {
+                usuarioBanco.setStatus(usuario.getStatus());
+                usuarioBanco.setNome(usuario.getNome());
+                usuarioBanco.setEmail(usuario.getEmail());
+                usuarioBanco.setCpf(usuario.getCpf());
+                usuarioBanco.setSenha(usuario.getSenha());
+
+                return usuarioRepository.save(usuarioBanco);
+            }
+            return null;
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Exclui o usuário pelo ID
+    public void deletarUsuarioPorId(Long id) {
+
+        usuarioRepository.deleteById(id);
     }
 }

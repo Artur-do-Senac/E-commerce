@@ -4,7 +4,6 @@ import com.example.ecommerceb2b.application.DTOs.AttStatusRequest;
 import com.example.ecommerceb2b.application.DTOs.UsuarioResponse;
 import com.example.ecommerceb2b.application.services.UsuarioService;
 import com.example.ecommerceb2b.domain.entities.Usuario;
-import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +13,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Camada de Presentation: a Controller só recebe a requisição HTTP, chama o Service e devolve a resposta (status + corpo).
+// Toda a regra de negócio e o acesso ao banco ficam no UsuarioService.
 @RestController
 @RequestMapping("/usuarios")
 @Tag(name= "Métodos de Usuários", description = "Grupo de API's responsável por controlar a estrutura de criação e consulta de usuários do sistema!")
 public class UsuarioController {
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private UsuarioService usuarioService;
@@ -35,10 +33,12 @@ public class UsuarioController {
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
 
-        if (usuarioBanco != null) {
-            return ResponseEntity.ok(usuarioBanco);
+        var usuarioEncontradoPorId = usuarioService.buscarUsuarioPorIdRetornaUsuarioOuNulo(id);
+
+        // O Service retorna null quando o ID não existe, então a Controller responde 404
+        if (usuarioEncontradoPorId != null) {
+            return ResponseEntity.ok(usuarioEncontradoPorId);
         }
         return ResponseEntity.notFound().build();
     }
@@ -47,20 +47,19 @@ public class UsuarioController {
     @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario) {
-        var usuarioBanco = usuarioRepository.save(usuario);
-        return ResponseEntity.ok(usuarioBanco);
+
+        var usuarioCriado = usuarioService.criarUsuarioRetornaUsuarioCriado(usuario);
+        return ResponseEntity.ok(usuarioCriado);
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de usuário no sistema")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
 
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        var usuarioComStatusAtualizado = usuarioService.atualizarStatusUsuarioRetornaUsuarioOuNulo(id, statusRequest);
 
-        if (usuarioBanco != null) {
-            usuarioBanco.setStatus(statusRequest.statusUsuario());
-            usuarioRepository.save(usuarioBanco);
-
+        // null significa que não existe usuário com esse ID
+        if (usuarioComStatusAtualizado != null) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
@@ -70,30 +69,20 @@ public class UsuarioController {
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
     public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
 
-        try {
-            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        var usuarioAtualizado = usuarioService.atualizarUsuarioRetornaUsuarioOuNulo(id, usuario);
 
-            if (usuarioBanco != null) {
-                usuarioBanco.setStatus(usuario.getStatus());
-                usuarioBanco.setNome(usuario.getNome());
-                usuarioBanco.setEmail(usuario.getEmail());
-                usuarioBanco.setCpf(usuario.getCpf());
-                usuarioBanco.setSenha(usuario.getSenha());
-                usuarioRepository.save(usuarioBanco);
-
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.notFound().build();
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        // null significa que não existe usuário com esse ID
+        if (usuarioAtualizado != null) {
+            return ResponseEntity.ok().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")
     @Operation(summary = "Deleta o registro por ID", description = "Deleta o registro por ID no sistema")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
-        usuarioRepository.deleteById(id);
+
+        usuarioService.deletarUsuarioPorId(id);
         return ResponseEntity.ok().build();
     }
 }
