@@ -1,6 +1,8 @@
 package com.example.ecommerceb2b.presentation;
 
 import com.example.ecommerceb2b.application.DTOs.AttStatusRequest;
+import com.example.ecommerceb2b.application.DTOs.CriarAdminRequest;
+import com.example.ecommerceb2b.application.DTOs.CriarAdminResponse;
 import com.example.ecommerceb2b.application.DTOs.UsuarioResponse;
 import com.example.ecommerceb2b.application.services.UsuarioService;
 import com.example.ecommerceb2b.domain.entities.Usuario;
@@ -29,6 +31,19 @@ public class UsuarioController {
 
         return ResponseEntity.ok(usuarioService.listarTodos());
     }
+
+    @PostMapping("/admin")
+    public ResponseEntity<CriarAdminResponse> criarAdmin (@RequestBody CriarAdminRequest criarAdminRequest) {
+
+        try {
+            CriarAdminResponse respostaSalvar = usuarioService.criarAdmin(criarAdminRequest);
+            return ResponseEntity.ok(respostaSalvar);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+    }
+
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")

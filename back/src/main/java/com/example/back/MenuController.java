@@ -24,6 +24,18 @@ public class MenuController {
     }
 
     @FXML
+    public void abrirCadastroCategoria(ActionEvent event) throws IOException {
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/back/cadastrarCategoria-view.fxml"));
+
+        Scene scene = new Scene(loader.load());
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+        stage.setScene(scene);
+
+    }
+
+    @FXML
     public void sair(){
         System.exit(0);
     }
