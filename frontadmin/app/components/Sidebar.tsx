@@ -6,6 +6,7 @@ export default function Sidebar(){
         { nome: "Home", href: "/home" },
         { nome: "Usuários", href: "/usuarios" },
         { nome: "Empresas", href: "/empresas" },
+        { nome: "Categorias", href: "/categorias" },
         { nome: "Produtos", href: "/produtos" },
         { nome: "Pedidos", href: "/pedidos" },
     ];

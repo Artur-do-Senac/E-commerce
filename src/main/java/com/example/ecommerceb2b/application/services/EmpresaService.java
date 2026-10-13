@@ -57,6 +57,7 @@ public class EmpresaService {
                 empresaBanco.setStatus(empresa.getStatus());
                 empresaBanco.setRazaoSocial(empresa.getRazaoSocial());
                 empresaBanco.setCnpj(empresa.getCnpj());
+                empresaBanco.setCategoria(empresa.getCategoria());
 
                 return empresaRepository.save(empresaBanco);
             }

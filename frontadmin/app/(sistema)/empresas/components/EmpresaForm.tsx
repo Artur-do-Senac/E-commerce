@@ -1,22 +1,43 @@
 'use client'
 
+import { Categoria } from "@/app/types/categoria";
 import { Empresa, EmpresaFormProp } from "@/app/types/empresa";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function EmpresaForm({empresaExistente}:EmpresaFormProp){
 
     const router = useRouter();
 
-    const [empresa, setEmpresa] = useState<Empresa>(empresaExistente ?? new Empresa(null, "", "", "ATIVO"));
+    const [empresa, setEmpresa] = useState<Empresa>(empresaExistente ?? new Empresa(null, "", "", "ATIVO", null));
 
-    const handlerChange = ( campo : 'razaoSocial' | 'cnpj', valor : string) =>{
+    const [categorias, setCategorias] = useState<Categoria[]>([])
+
+    useEffect(()=>{
+
+        const carregarCategorias = async ()=>{
+
+            try {
+                const dados = await axios.get<Categoria[]>("http://localhost:8080/categorias")
+
+                setCategorias(dados.data);
+            } catch (error) {
+                alert("Erro ao carregar categorias")
+            }
+
+        }
+
+        carregarCategorias();
+    },[]);
+
+    const handlerChange = ( campo : 'razaoSocial' | 'cnpj' | 'categoria', valor : string) =>{
         setEmpresa(valorAnterior => new Empresa(valorAnterior.id,
             campo === 'razaoSocial' ? valor : valorAnterior.razaoSocial,
             campo === 'cnpj' ? valor : valorAnterior.cnpj,
-            valorAnterior.status
+            valorAnterior.status,
+            campo === 'categoria' ? (categorias.find(categoria => categoria.id === Number(valor)) ?? null) : valorAnterior.categoria
             )
         )
     }
@@ -62,6 +83,20 @@ export default function EmpresaForm({empresaExistente}:EmpresaFormProp){
                 placeholder="00.000.000/0000-00"
                 onChange={(e) => handlerChange('cnpj', e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+            </div>
+            <div className="group flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">Categoria (Ramo): </label>
+                <select
+                name="categoria"
+                value={empresa.categoria?.id ?? ""}
+                required
+                onChange={(e) => handlerChange('categoria', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100">
+                    <option value="">Selecione uma categoria...</option>
+                    {categorias.map((categoria) => (
+                        <option key={categoria.id} value={categoria.id ?? ""}>{categoria.nome}</option>
+                    ))}
+                </select>
             </div>
 
 

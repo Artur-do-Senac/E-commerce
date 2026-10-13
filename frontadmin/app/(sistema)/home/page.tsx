@@ -5,6 +5,7 @@ export default function Home(){
     const modulos = [
         { nome: "Usuários", href: "/usuarios", descricao: "Gerencie os usuários do sistema" },
         { nome: "Empresas", href: "/empresas", descricao: "Gerencie as empresas cadastradas" },
+        { nome: "Categorias", href: "/categorias", descricao: "Gerencie as categorias (ramos) das empresas" },
         { nome: "Produtos", href: "/produtos", descricao: "Gerencie o catálogo de produtos" },
         { nome: "Pedidos", href: "/pedidos", descricao: "Acompanhe os pedidos realizados" },
     ];
@@ -13,7 +14,7 @@ export default function Home(){
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-10 bg-gradient-to-b from-primary-50 via-white to-white px-6 py-16 text-center">
             <h1 className="bg-gradient-to-r from-primary-900 to-primary-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl"> Bem vindo ao MarketHub!</h1>
 
-            <div className="grid w-full max-w-4xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid w-full max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 {modulos.map((modulo) => (
                     <Link
                         key={modulo.href}
