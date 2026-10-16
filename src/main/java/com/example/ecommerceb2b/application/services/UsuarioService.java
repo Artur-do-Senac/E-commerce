@@ -48,9 +48,11 @@ public class UsuarioService {
     }
 
     // Salva um novo usuário no banco e retorna o usuário já salvo (com o ID gerado)
-    public Usuario criarUsuarioRetornaUsuarioCriado(Usuario usuario) {
+    public Usuario criarUsuarioRetornaUsuarioCriado(UsuarioRequest usuario) {
 
-        return usuarioRepository.save(usuario);
+        Usuario usuarioBanco = new Usuario(usuario);
+
+        return usuarioRepository.save(usuarioBanco);
     }
 
     // Atualiza somente o status do usuário. Retorna o usuário atualizado ou null quando o ID não existe

@@ -1,9 +1,6 @@
 package com.example.ecommerceb2b.presentation;
 
-import com.example.ecommerceb2b.application.DTOs.AttStatusRequest;
-import com.example.ecommerceb2b.application.DTOs.CriarAdminRequest;
-import com.example.ecommerceb2b.application.DTOs.CriarAdminResponse;
-import com.example.ecommerceb2b.application.DTOs.UsuarioResponse;
+import com.example.ecommerceb2b.application.DTOs.*;
 import com.example.ecommerceb2b.application.services.UsuarioService;
 import com.example.ecommerceb2b.domain.entities.Usuario;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,9 +58,9 @@ public class UsuarioController {
     @PostMapping
     @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario) {
+    public ResponseEntity<UsuarioResponse> criar(@RequestBody UsuarioRequest usuario) {
 
-        var usuarioCriado = usuarioService.criarUsuarioRetornaUsuarioCriado(usuario);
+        UsuarioResponse usuarioCriado = usuarioService.criarUsuarioRetornaUsuarioCriado(usuario);
         return ResponseEntity.ok(usuarioCriado);
     }
 
