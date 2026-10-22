@@ -3,6 +3,7 @@ package com.example.ecommerceb2b.application.services;
 import com.example.ecommerceb2b.application.DTOs.*;
 import com.example.ecommerceb2b.domain.entities.Usuario;
 import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
+import com.example.ecommerceb2b.domain.valueobject.CPF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,8 @@ public class UsuarioService {
 
     public LoginResponse validarUsuarioAutenticadoRetornaToken (LoginRequest request){
 
-        if (usuarioRepository.existsUsuarioByEmailAndSenha(request.email(), request.senha())) {
+        // Usuário excluído (status EXCLUIDO) não consegue mais entrar no sistema
+        if (usuarioRepository.existsUsuarioByEmailAndSenhaAndStatusNot(request.email(), request.senha(), EnumStatusUsuario.EXCLUIDO)) {
 
             var token = tokenService.gerarToken(request.email());
 
@@ -33,67 +35,68 @@ public class UsuarioService {
         return null;
     }
 
+    // Retorna todos os usuários, menos os excluídos (exclusão lógica: status EXCLUIDO)
     public List<UsuarioResponse> listarTodos() {
 
-        return usuarioRepository.findAll()
+        return usuarioRepository.findByStatusNot(EnumStatusUsuario.EXCLUIDO)
+                .orElse(List.of())
                 .stream()
                 .map(UsuarioResponse::new)
                 .toList();
     }
 
-    // Busca um usuário pelo ID. Retorna o usuário encontrado ou null quando não existe (a Controller transforma o null em 404)
-    public Usuario buscarUsuarioPorIdRetornaUsuarioOuNulo(Long id) {
+    // Busca um usuário pelo ID. Retorna o UsuarioResponse (nunca a entidade) ou null quando não existe (a Controller transforma o null em 404)
+    public UsuarioResponse buscarPorId(Long id) {
 
-        return usuarioRepository.findById(id).orElse(null);
+        var usuario = usuarioRepository.findById(id).orElse(null);
+
+        if (usuario == null) {
+            return null;
+        }
+        return new UsuarioResponse(usuario);
     }
 
-    // Salva um novo usuário no banco e retorna o usuário já salvo (com o ID gerado)
-    public Usuario criarUsuarioRetornaUsuarioCriado(UsuarioRequest usuario) {
+    // Salva o usuário: com id 0 cria um novo, com qualquer outro id atualiza o existente. Retorna o usuário salvo ou null quando o ID não existe
+    // CPF ou e-mail inválido lança IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public UsuarioResponse salvarUsuario(UsuarioRequest usuario, Long id) {
 
-        Usuario usuarioBanco = new Usuario(usuario);
+        // Novo usuário
+        if (id == 0L) {
+            Usuario usuarioBanco = new Usuario(usuario);
+            usuarioRepository.save(usuarioBanco);
 
-        return usuarioRepository.save(usuarioBanco);
-    }
+            return new UsuarioResponse(usuarioBanco);
+        }
 
-    // Atualiza somente o status do usuário. Retorna o usuário atualizado ou null quando o ID não existe
-    public Usuario atualizarStatusUsuarioRetornaUsuarioOuNulo(Long id, AttStatusRequest statusRequest) {
-
+        // Usuário existente
         Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
 
         if (usuarioBanco != null) {
-            usuarioBanco.setStatus(statusRequest.statusUsuario());
+            usuarioBanco.setNome(usuario.nome());
+            usuarioBanco.setCpf(new CPF(usuario.cpf()));
+            usuarioBanco.informarTelefone(usuario.telefone());
+            usuarioBanco.setEmail(usuario.email());
+            usuarioBanco.setSenha(usuario.senha());
+            usuarioRepository.save(usuarioBanco);
 
-            return usuarioRepository.save(usuarioBanco);
+            return new UsuarioResponse(usuarioBanco);
         }
         return null;
     }
 
-    // Atualiza todos os dados do usuário. Retorna o usuário atualizado ou null quando o ID não existe
-    public Usuario atualizarUsuarioRetornaUsuarioOuNulo(Long id, Usuario usuario) {
+    // Atualiza somente o status do usuário. Retorna true quando atualizou e false quando o ID não existe
+    // A exclusão também passa por aqui: excluir é trocar o status para EXCLUIDO (o registro continua no banco)
+    public boolean atualizarStatus(EnumStatusUsuario status, Long id) {
 
-        try {
-            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
 
-            if (usuarioBanco != null) {
-                usuarioBanco.setStatus(usuario.getStatus());
-                usuarioBanco.setNome(usuario.getNome());
-                usuarioBanco.setEmail(usuario.getEmail());
-                usuarioBanco.setCpf(usuario.getCpf());
-                usuarioBanco.setSenha(usuario.getSenha());
+        if (usuarioBanco != null) {
+            usuarioBanco.setStatus(status);
+            usuarioRepository.save(usuarioBanco);
 
-                return usuarioRepository.save(usuarioBanco);
-            }
-            return null;
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            return true;
         }
-    }
-
-    // Exclui o usuário pelo ID
-    public void deletarUsuarioPorId(Long id) {
-
-        usuarioRepository.deleteById(id);
+        return false;
     }
 
     public CriarAdminResponse criarAdmin(CriarAdminRequest criarAdminRequest) {

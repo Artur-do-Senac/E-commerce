@@ -1,7 +1,8 @@
 package com.example.ecommerceb2b.presentation;
 
+import com.example.ecommerceb2b.application.DTOs.CategoriaRequest;
+import com.example.ecommerceb2b.application.DTOs.CategoriaResponse;
 import com.example.ecommerceb2b.application.services.CategoriaService;
-import com.example.ecommerceb2b.domain.entities.Categoria;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +24,16 @@ public class CategoriaController {
 
     @GetMapping
     @Operation(summary = "Lista todas as categorias", description = "Retorna uma lista completa das categorias cadastradas no sistema.")
-    public ResponseEntity<List<Categoria>> listarTodos() {
+    public ResponseEntity<List<CategoriaResponse>> listarTodos() {
 
         return ResponseEntity.ok(categoriaService.listarTodos());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
-    public ResponseEntity<Categoria> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<CategoriaResponse> buscarPorId(@PathVariable Long id) {
 
-        var categoriaEncontradaPorId = categoriaService.buscarCategoriaPorIdRetornaCategoriaOuNulo(id);
+        var categoriaEncontradaPorId = categoriaService.buscarPorId(id);
 
         // O Service retorna null quando o ID não existe, então a Controller responde 404
         if (categoriaEncontradaPorId != null) {
@@ -44,23 +45,33 @@ public class CategoriaController {
     @PostMapping
     @Operation(summary = "Cria uma nova categoria", description = "Cria um novo registro de categoria no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Categoria> criar(@RequestBody Categoria categoria) {
+    public ResponseEntity<?> criar(@RequestBody CategoriaRequest categoria) {
 
-        var categoriaCriada = categoriaService.criarCategoriaRetornaCategoriaCriada(categoria);
-        return ResponseEntity.ok(categoriaCriada);
+        try {
+            CategoriaResponse categoriaCriada = categoriaService.salvarCategoria(categoria, 0L);
+            return ResponseEntity.ok(categoriaCriada);
+        } catch (Exception e) {
+            // Dado inválido: responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
-    public ResponseEntity<Categoria> atualizarCategoria(@PathVariable Long id, @RequestBody Categoria categoria) {
+    public ResponseEntity<?> atualizarCategoria(@PathVariable Long id, @RequestBody CategoriaRequest categoria) {
 
-        var categoriaAtualizada = categoriaService.atualizarCategoriaRetornaCategoriaOuNulo(id, categoria);
+        try {
+            var categoriaAtualizada = categoriaService.salvarCategoria(categoria, id);
 
-        // null significa que não existe categoria com esse ID
-        if (categoriaAtualizada != null) {
-            return ResponseEntity.ok().build();
+            // null significa que não existe categoria com esse ID
+            if (categoriaAtualizada != null) {
+                return ResponseEntity.ok(categoriaAtualizada);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            // Dado inválido: responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")

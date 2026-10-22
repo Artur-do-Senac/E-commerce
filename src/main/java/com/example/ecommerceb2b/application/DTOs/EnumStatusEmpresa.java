@@ -1,4 +1,4 @@
-package com.example.ecommerceb2b.domain.entities;
+package com.example.ecommerceb2b.application.DTOs;
 
 public enum EnumStatusEmpresa {
     ATIVO,

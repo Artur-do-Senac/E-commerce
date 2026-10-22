@@ -1,7 +1,11 @@
 package com.example.ecommerceb2b.application.services;
 
-import com.example.ecommerceb2b.application.DTOs.AttStatusEmpresaRequest;
+import com.example.ecommerceb2b.application.DTOs.EmpresaRequest;
+import com.example.ecommerceb2b.application.DTOs.EmpresaResponse;
+import com.example.ecommerceb2b.application.DTOs.EnumStatusEmpresa;
+import com.example.ecommerceb2b.domain.entities.Categoria;
 import com.example.ecommerceb2b.domain.entities.Empresa;
+import com.example.ecommerceb2b.domain.repository.CategoriaRepository;
 import com.example.ecommerceb2b.domain.repository.EmpresaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,56 +20,71 @@ public class EmpresaService {
     @Autowired
     private EmpresaRepository empresaRepository;
 
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
     // Retorna todas as empresas cadastradas
-    public List<Empresa> listarTodos() {
+    public List<EmpresaResponse> listarTodos() {
 
-        return empresaRepository.findAll();
+        return empresaRepository.findAll()
+                .stream()
+                .map(EmpresaResponse::new)
+                .toList();
     }
 
-    // Busca uma empresa pelo ID. Retorna a empresa encontrada ou null quando não existe (a Controller transforma o null em 404)
-    public Empresa buscarEmpresaPorIdRetornaEmpresaOuNulo(Long id) {
+    // Busca uma empresa pelo ID. Retorna o EmpresaResponse (nunca a entidade) ou null quando não existe (a Controller transforma o null em 404)
+    public EmpresaResponse buscarPorId(Long id) {
 
-        return empresaRepository.findById(id).orElse(null);
+        var empresa = empresaRepository.findById(id).orElse(null);
+
+        if (empresa == null) {
+            return null;
+        }
+        return new EmpresaResponse(empresa);
     }
 
-    // Salva uma nova empresa no banco e retorna a empresa já salva (com o ID gerado)
-    public Empresa criarEmpresaRetornaEmpresaCriada(Empresa empresa) {
+    // Salva a empresa: com id 0 cria uma nova, com qualquer outro id atualiza a existente. Retorna a empresa salva ou null quando o ID não existe
+    // Dados inválidos (CNPJ, telefone, categoria...) lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public EmpresaResponse salvarEmpresa(EmpresaRequest empresa, Long id) {
 
-        return empresaRepository.save(empresa);
-    }
+        // Categoria (ramo) escolhida. Se não existir, fica null e a entidade recusa com "Categoria Invalida!"
+        Categoria categoria = empresa.categoriaId() == null ? null : categoriaRepository.findById(empresa.categoriaId()).orElse(null);
 
-    // Atualiza somente o status da empresa. Retorna a empresa atualizada ou null quando o ID não existe
-    public Empresa atualizarStatusEmpresaRetornaEmpresaOuNulo(Long id, AttStatusEmpresaRequest statusRequest) {
+        // Nova empresa
+        if (id == 0L) {
+            Empresa empresaBanco = new Empresa(empresa, categoria);
+            empresaRepository.save(empresaBanco);
 
+            return new EmpresaResponse(empresaBanco);
+        }
+
+        // Empresa existente
         Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
 
         if (empresaBanco != null) {
-            empresaBanco.setStatus(statusRequest.statusEmpresa());
+            empresaBanco.setRazaoSocial(empresa.razaoSocial());
+            empresaBanco.setCnpj(empresa.cnpj());
+            empresaBanco.informarTelefone(empresa.telefone());
+            empresaBanco.setCategoria(categoria);
+            empresaRepository.save(empresaBanco);
 
-            return empresaRepository.save(empresaBanco);
+            return new EmpresaResponse(empresaBanco);
         }
         return null;
     }
 
-    // Atualiza todos os dados da empresa. Retorna a empresa atualizada ou null quando o ID não existe
-    public Empresa atualizarEmpresaRetornaEmpresaOuNulo(Long id, Empresa empresa) {
+    // Atualiza somente o status da empresa. Retorna true quando atualizou e false quando o ID não existe
+    public boolean atualizarStatus(EnumStatusEmpresa status, Long id) {
 
-        try {
-            Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
+        Empresa empresaBanco = empresaRepository.findById(id).orElse(null);
 
-            if (empresaBanco != null) {
-                empresaBanco.setStatus(empresa.getStatus());
-                empresaBanco.setRazaoSocial(empresa.getRazaoSocial());
-                empresaBanco.setCnpj(empresa.getCnpj());
-                empresaBanco.setCategoria(empresa.getCategoria());
+        if (empresaBanco != null) {
+            empresaBanco.setStatus(status);
+            empresaRepository.save(empresaBanco);
 
-                return empresaRepository.save(empresaBanco);
-            }
-            return null;
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            return true;
         }
+        return false;
     }
 
     // Exclui a empresa pelo ID

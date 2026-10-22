@@ -1,8 +1,9 @@
 package com.example.ecommerceb2b.presentation;
 
 import com.example.ecommerceb2b.application.DTOs.AttStatusEmpresaRequest;
+import com.example.ecommerceb2b.application.DTOs.EmpresaRequest;
+import com.example.ecommerceb2b.application.DTOs.EmpresaResponse;
 import com.example.ecommerceb2b.application.services.EmpresaService;
-import com.example.ecommerceb2b.domain.entities.Empresa;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +26,16 @@ public class EmpresaController {
 
     @GetMapping
     @Operation(summary = "Lista todas as empresas", description = "Retorna uma lista completa das empresas cadastrados no sistema.")
-    public ResponseEntity<List<Empresa>> listarTodos() {
+    public ResponseEntity<List<EmpresaResponse>> listarTodos() {
 
         return ResponseEntity.ok(empresaService.listarTodos());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
-    public ResponseEntity<Empresa> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<EmpresaResponse> buscarPorId(@PathVariable Long id) {
 
-        var empresaEncontradaPorId = empresaService.buscarEmpresaPorIdRetornaEmpresaOuNulo(id);
+        var empresaEncontradaPorId = empresaService.buscarPorId(id);
 
         // O Service retorna null quando o ID não existe, então a Controller responde 404
         if (empresaEncontradaPorId != null) {
@@ -46,20 +47,25 @@ public class EmpresaController {
     @PostMapping
     @Operation(summary = "Cria uma nova empresa", description = "Cria um novo registro de empresa no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Empresa> criar(@RequestBody Empresa empresa) {
+    public ResponseEntity<?> criar(@RequestBody EmpresaRequest empresa) {
 
-        var empresaCriada = empresaService.criarEmpresaRetornaEmpresaCriada(empresa);
-        return ResponseEntity.ok(empresaCriada);
+        try {
+            EmpresaResponse empresaCriada = empresaService.salvarEmpresa(empresa, 0L);
+            return ResponseEntity.ok(empresaCriada);
+        } catch (Exception e) {
+            // Dado inválido (CNPJ, telefone, categoria...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de empresa no sistema")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusEmpresaRequest statusRequest) {
 
-        var empresaComStatusAtualizado = empresaService.atualizarStatusEmpresaRetornaEmpresaOuNulo(id, statusRequest);
+        var empresaComStatusAtualizado = empresaService.atualizarStatus(statusRequest.statusEmpresa(), id);
 
-        // null significa que não existe empresa com esse ID
-        if (empresaComStatusAtualizado != null) {
+        // false significa que não existe empresa com esse ID
+        if (empresaComStatusAtualizado) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
@@ -67,15 +73,20 @@ public class EmpresaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
-    public ResponseEntity<Empresa> atualizarEmpresa(@PathVariable Long id, @RequestBody Empresa empresa) {
+    public ResponseEntity<?> atualizarEmpresa(@PathVariable Long id, @RequestBody EmpresaRequest empresa) {
 
-        var empresaAtualizada = empresaService.atualizarEmpresaRetornaEmpresaOuNulo(id, empresa);
+        try {
+            var empresaAtualizada = empresaService.salvarEmpresa(empresa, id);
 
-        // null significa que não existe empresa com esse ID
-        if (empresaAtualizada != null) {
-            return ResponseEntity.ok().build();
+            // null significa que não existe empresa com esse ID
+            if (empresaAtualizada != null) {
+                return ResponseEntity.ok(empresaAtualizada);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            // Dado inválido (CNPJ, telefone, categoria...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")

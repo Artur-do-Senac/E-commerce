@@ -1,5 +1,7 @@
 package com.example.ecommerceb2b.application.services;
 
+import com.example.ecommerceb2b.application.DTOs.CategoriaRequest;
+import com.example.ecommerceb2b.application.DTOs.CategoriaResponse;
 import com.example.ecommerceb2b.domain.entities.Categoria;
 import com.example.ecommerceb2b.domain.repository.CategoriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,33 +18,46 @@ public class CategoriaService {
     private CategoriaRepository categoriaRepository;
 
     // Retorna todas as categorias cadastradas
-    public List<Categoria> listarTodos() {
+    public List<CategoriaResponse> listarTodos() {
 
-        return categoriaRepository.findAll();
+        return categoriaRepository.findAll()
+                .stream()
+                .map(CategoriaResponse::new)
+                .toList();
     }
 
-    // Busca uma categoria pelo ID. Retorna a categoria encontrada ou null quando não existe (a Controller transforma o null em 404)
-    public Categoria buscarCategoriaPorIdRetornaCategoriaOuNulo(Long id) {
+    // Busca uma categoria pelo ID. Retorna o CategoriaResponse (nunca a entidade) ou null quando não existe (a Controller transforma o null em 404)
+    public CategoriaResponse buscarPorId(Long id) {
 
-        return categoriaRepository.findById(id).orElse(null);
+        var categoria = categoriaRepository.findById(id).orElse(null);
+
+        if (categoria == null) {
+            return null;
+        }
+        return new CategoriaResponse(categoria);
     }
 
-    // Salva uma nova categoria no banco e retorna a categoria já salva (com o ID gerado)
-    public Categoria criarCategoriaRetornaCategoriaCriada(Categoria categoria) {
+    // Salva a categoria: com id 0 cria uma nova, com qualquer outro id atualiza a existente. Retorna a categoria salva ou null quando o ID não existe
+    // Dados inválidos lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public CategoriaResponse salvarCategoria(CategoriaRequest categoria, Long id) {
 
-        return categoriaRepository.save(categoria);
-    }
+        // Nova categoria
+        if (id == 0L) {
+            Categoria categoriaBanco = new Categoria(categoria);
+            categoriaRepository.save(categoriaBanco);
 
-    // Atualiza todos os dados da categoria. Retorna a categoria atualizada ou null quando o ID não existe
-    public Categoria atualizarCategoriaRetornaCategoriaOuNulo(Long id, Categoria categoria) {
+            return new CategoriaResponse(categoriaBanco);
+        }
 
+        // Categoria existente
         Categoria categoriaBanco = categoriaRepository.findById(id).orElse(null);
 
         if (categoriaBanco != null) {
-            categoriaBanco.setNome(categoria.getNome());
-            categoriaBanco.setDescricao(categoria.getDescricao());
+            categoriaBanco.setNome(categoria.nome());
+            categoriaBanco.setDescricao(categoria.descricao());
+            categoriaRepository.save(categoriaBanco);
 
-            return categoriaRepository.save(categoriaBanco);
+            return new CategoriaResponse(categoriaBanco);
         }
         return null;
     }

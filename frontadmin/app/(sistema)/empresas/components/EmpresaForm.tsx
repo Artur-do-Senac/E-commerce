@@ -44,11 +44,14 @@ export default function EmpresaForm({empresaExistente}:EmpresaFormProp){
 
     const handlerSalvar = async () => {
 
+        // o backend recebe só o id da categoria (categoriaId), e não o objeto inteiro
+        const empresaRequest = { ...empresa, categoriaId: empresa.categoria?.id ?? null }
+
         try {
             if (empresa.id) {
-                await axios.put('http://localhost:8080/empresas/'+empresa.id, empresa)
+                await axios.put('http://localhost:8080/empresas/'+empresa.id, empresaRequest)
             } else {
-                await axios.post('http://localhost:8080/empresas', empresa)
+                await axios.post('http://localhost:8080/empresas', empresaRequest)
             }
             alert("Empresa foi salva com sucesso!");
         } catch (error) {

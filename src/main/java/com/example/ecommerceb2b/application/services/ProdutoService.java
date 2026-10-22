@@ -1,6 +1,8 @@
 package com.example.ecommerceb2b.application.services;
 
-import com.example.ecommerceb2b.application.DTOs.AttStatusProdutoRequest;
+import com.example.ecommerceb2b.application.DTOs.EnumStatusProduto;
+import com.example.ecommerceb2b.application.DTOs.ProdutoRequest;
+import com.example.ecommerceb2b.application.DTOs.ProdutoResponse;
 import com.example.ecommerceb2b.domain.entities.Produto;
 import com.example.ecommerceb2b.domain.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,56 +19,64 @@ public class ProdutoService {
     private ProdutoRepository produtoRepository;
 
     // Retorna todos os produtos cadastrados
-    public List<Produto> listarTodos() {
+    public List<ProdutoResponse> listarTodos() {
 
-        return produtoRepository.findAll();
+        return produtoRepository.findAll()
+                .stream()
+                .map(ProdutoResponse::new)
+                .toList();
     }
 
-    // Busca um produto pelo ID. Retorna o produto encontrado ou null quando não existe (a Controller transforma o null em 404)
-    public Produto buscarProdutoPorIdRetornaProdutoOuNulo(Long id) {
+    // Busca um produto pelo ID. Retorna o ProdutoResponse (nunca a entidade) ou null quando não existe (a Controller transforma o null em 404)
+    public ProdutoResponse buscarPorId(Long id) {
 
-        return produtoRepository.findById(id).orElse(null);
+        var produto = produtoRepository.findById(id).orElse(null);
+
+        if (produto == null) {
+            return null;
+        }
+        return new ProdutoResponse(produto);
     }
 
-    // Salva um novo produto no banco e retorna o produto já salvo (com o ID gerado)
-    public Produto criarProdutoRetornaProdutoCriado(Produto produto) {
+    // Salva o produto: com id 0 cria um novo, com qualquer outro id atualiza o existente. Retorna o produto salvo ou null quando o ID não existe
+    // Dados inválidos (preço, estoque...) lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public ProdutoResponse salvarProduto(ProdutoRequest produto, Long id) {
 
-        return produtoRepository.save(produto);
-    }
+        // Novo produto
+        if (id == 0L) {
+            Produto produtoBanco = new Produto(produto);
+            produtoRepository.save(produtoBanco);
 
-    // Atualiza somente o status do produto. Retorna o produto atualizado ou null quando o ID não existe
-    public Produto atualizarStatusProdutoRetornaProdutoOuNulo(Long id, AttStatusProdutoRequest statusRequest) {
+            return new ProdutoResponse(produtoBanco);
+        }
 
+        // Produto existente
         Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
         if (produtoBanco != null) {
-            produtoBanco.setStatus(statusRequest.statusProduto());
+            produtoBanco.setNome(produto.nome());
+            produtoBanco.setPreco(produto.preco());
+            produtoBanco.setVencimento(produto.vencimento());
+            produtoBanco.setQuantidadeEstoque(produto.quantidadeEstoque());
+            produtoRepository.save(produtoBanco);
 
-            return produtoRepository.save(produtoBanco);
+            return new ProdutoResponse(produtoBanco);
         }
         return null;
     }
 
-    // Atualiza todos os dados do produto. Retorna o produto atualizado ou null quando o ID não existe
-    public Produto atualizarProdutoRetornaProdutoOuNulo(Long id, Produto produto) {
+    // Atualiza somente o status do produto. Retorna true quando atualizou e false quando o ID não existe
+    public boolean atualizarStatus(EnumStatusProduto status, Long id) {
 
-        try {
-            Produto produtoBanco = produtoRepository.findById(id).orElse(null);
+        Produto produtoBanco = produtoRepository.findById(id).orElse(null);
 
-            if (produtoBanco != null) {
-                produtoBanco.setStatus(produto.getStatus());
-                produtoBanco.setNome(produto.getNome());
-                produtoBanco.setPreco(produto.getPreco());
-                produtoBanco.setVencimento(produto.getVencimento());
-                produtoBanco.setQuantidadeEstoque(produto.getQuantidadeEstoque());
+        if (produtoBanco != null) {
+            produtoBanco.setStatus(status);
+            produtoRepository.save(produtoBanco);
 
-                return produtoRepository.save(produtoBanco);
-            }
-            return null;
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            return true;
         }
+        return false;
     }
 
     // Exclui o produto pelo ID

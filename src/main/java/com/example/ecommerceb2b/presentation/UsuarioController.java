@@ -2,7 +2,6 @@ package com.example.ecommerceb2b.presentation;
 
 import com.example.ecommerceb2b.application.DTOs.*;
 import com.example.ecommerceb2b.application.services.UsuarioService;
-import com.example.ecommerceb2b.domain.entities.Usuario;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +43,9 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
-    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id) {
 
-        var usuarioEncontradoPorId = usuarioService.buscarUsuarioPorIdRetornaUsuarioOuNulo(id);
+        var usuarioEncontradoPorId = usuarioService.buscarPorId(id);
 
         // O Service retorna null quando o ID não existe, então a Controller responde 404
         if (usuarioEncontradoPorId != null) {
@@ -58,20 +57,25 @@ public class UsuarioController {
     @PostMapping
     @Operation(summary = "Cria um novo usuário", description = "Cria um novo registro de usuário no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<UsuarioResponse> criar(@RequestBody UsuarioRequest usuario) {
+    public ResponseEntity<?> criar(@RequestBody UsuarioRequest usuario) {
 
-        UsuarioResponse usuarioCriado = usuarioService.criarUsuarioRetornaUsuarioCriado(usuario);
-        return ResponseEntity.ok(usuarioCriado);
+        try {
+            UsuarioResponse usuarioCriado = usuarioService.salvarUsuario(usuario, 0L);
+            return ResponseEntity.ok(usuarioCriado);
+        } catch (Exception e) {
+            // CPF ou e-mail inválido: responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de usuário no sistema")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusRequest statusRequest) {
 
-        var usuarioComStatusAtualizado = usuarioService.atualizarStatusUsuarioRetornaUsuarioOuNulo(id, statusRequest);
+        var usuarioComStatusAtualizado = usuarioService.atualizarStatus(statusRequest.statusUsuario(), id);
 
-        // null significa que não existe usuário com esse ID
-        if (usuarioComStatusAtualizado != null) {
+        // false significa que não existe usuário com esse ID
+        if (usuarioComStatusAtualizado) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
@@ -79,22 +83,32 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
-    public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
+    public ResponseEntity<?> atualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequest usuario) {
 
-        var usuarioAtualizado = usuarioService.atualizarUsuarioRetornaUsuarioOuNulo(id, usuario);
+        try {
+            var usuarioAtualizado = usuarioService.salvarUsuario(usuario, id);
 
-        // null significa que não existe usuário com esse ID
-        if (usuarioAtualizado != null) {
-            return ResponseEntity.ok().build();
+            // null significa que não existe usuário com esse ID
+            if (usuarioAtualizado != null) {
+                return ResponseEntity.ok(usuarioAtualizado);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            // CPF ou e-mail inválido: responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")
-    @Operation(summary = "Deleta o registro por ID", description = "Deleta o registro por ID no sistema")
+    @Operation(summary = "Exclui o registro por ID", description = "Exclui o registro por ID no sistema (exclusão lógica: o status passa para EXCLUIDO e o registro continua no banco)")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
 
-        usuarioService.deletarUsuarioPorId(id);
-        return ResponseEntity.ok().build();
+        var usuarioExcluido = usuarioService.atualizarStatus(EnumStatusUsuario.EXCLUIDO, id);
+
+        // false significa que não existe usuário com esse ID
+        if (usuarioExcluido) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

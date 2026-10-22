@@ -1,8 +1,9 @@
 package com.example.ecommerceb2b.presentation;
 
 import com.example.ecommerceb2b.application.DTOs.AttStatusProdutoRequest;
+import com.example.ecommerceb2b.application.DTOs.ProdutoRequest;
+import com.example.ecommerceb2b.application.DTOs.ProdutoResponse;
 import com.example.ecommerceb2b.application.services.ProdutoService;
-import com.example.ecommerceb2b.domain.entities.Produto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +26,16 @@ public class ProdutoController {
 
     @GetMapping
     @Operation(summary = "Lista todos os produtos", description = "Retorna uma lista completa dos produtos cadastrados no sistema.")
-    public ResponseEntity<List<Produto>> listarTodos() {
+    public ResponseEntity<List<ProdutoResponse>> listarTodos() {
 
         return ResponseEntity.ok(produtoService.listarTodos());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o registro por ID", description = "Lista o registro por ID no sistema")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ProdutoResponse> buscarPorId(@PathVariable Long id) {
 
-        var produtoEncontradoPorId = produtoService.buscarProdutoPorIdRetornaProdutoOuNulo(id);
+        var produtoEncontradoPorId = produtoService.buscarPorId(id);
 
         // O Service retorna null quando o ID não existe, então a Controller responde 404
         if (produtoEncontradoPorId != null) {
@@ -46,20 +47,25 @@ public class ProdutoController {
     @PostMapping
     @Operation(summary = "Cria um novo produto", description = "Cria um novo registro de produto no sistema")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Produto> criar(@RequestBody Produto produto) {
+    public ResponseEntity<?> criar(@RequestBody ProdutoRequest produto) {
 
-        var produtoCriado = produtoService.criarProdutoRetornaProdutoCriado(produto);
-        return ResponseEntity.ok(produtoCriado);
+        try {
+            ProdutoResponse produtoCriado = produtoService.salvarProduto(produto, 0L);
+            return ResponseEntity.ok(produtoCriado);
+        } catch (Exception e) {
+            // Dado inválido (preço, estoque...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Atualiza o status", description = "Atualiza status de produto no sistema")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AttStatusProdutoRequest statusRequest) {
 
-        var produtoComStatusAtualizado = produtoService.atualizarStatusProdutoRetornaProdutoOuNulo(id, statusRequest);
+        var produtoComStatusAtualizado = produtoService.atualizarStatus(statusRequest.statusProduto(), id);
 
-        // null significa que não existe produto com esse ID
-        if (produtoComStatusAtualizado != null) {
+        // false significa que não existe produto com esse ID
+        if (produtoComStatusAtualizado) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
@@ -67,15 +73,20 @@ public class ProdutoController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
-    public ResponseEntity<Produto> atualizarProduto(@PathVariable Long id, @RequestBody Produto produto) {
+    public ResponseEntity<?> atualizarProduto(@PathVariable Long id, @RequestBody ProdutoRequest produto) {
 
-        var produtoAtualizado = produtoService.atualizarProdutoRetornaProdutoOuNulo(id, produto);
+        try {
+            var produtoAtualizado = produtoService.salvarProduto(produto, id);
 
-        // null significa que não existe produto com esse ID
-        if (produtoAtualizado != null) {
-            return ResponseEntity.ok().build();
+            // null significa que não existe produto com esse ID
+            if (produtoAtualizado != null) {
+                return ResponseEntity.ok(produtoAtualizado);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            // Dado inválido (preço, estoque...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}/excluir")
