@@ -5,6 +5,7 @@ import com.example.ecommerceb2b.application.DTOs.EsqueciSenhaRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginResponse;
 import com.example.ecommerceb2b.application.DTOs.RedefinirSenhaRequest;
+import com.example.ecommerceb2b.application.services.TokenService;
 import com.example.ecommerceb2b.application.services.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +27,9 @@ public class AuthController {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private TokenService tokenService;
+
 
     @PostMapping("/login")
     @Operation(summary = "Autenticação de usuários", description = "Método de login")
@@ -37,6 +42,16 @@ public class AuthController {
             return ResponseEntity.ok(resultadoAutenticacaoRetornoToken);
         }
         return ResponseEntity.badRequest().body("Usuário e/ou senha inválidos");
+    }
+
+    // O JwtFilter já validou o token antes de chegar aqui, então o cabeçalho Authorization sempre vem no formato "Bearer <token>"
+    @PostMapping("/logout")
+    @Operation(summary = "Logout", description = "Invalida o token enviado no cabeçalho Authorization: ele deixa de ser aceito nas próximas requisições")
+    public ResponseEntity<Void> logout (@RequestHeader("Authorization") String authorization){
+
+        tokenService.invalidarToken(authorization.substring("Bearer ".length()));
+
+        return ResponseEntity.ok().build();
     }
 
     /* PARA AJUSTAR O RESTANTE, É NECESSÁRIO CRIAR UM METODO PRA CADA UM DENTRO DE USUARIOSERVICE */

@@ -13,7 +13,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsUsuarioByEmailAndSenha(String email, String senha);
 
-    boolean existsUsuarioByEmailAndSenhaAndStatusNot(String email, String senha, EnumStatusUsuario status);
+    // Login: devolve o próprio usuário autenticado (o token é gerado para ele, e não para "algum usuário com esse e-mail")
+    Optional<Usuario> findFirstByEmailAndSenhaAndStatusNot(String email, String senha, EnumStatusUsuario status);
 
     Optional<List<Usuario>> findByStatusNot(EnumStatusUsuario status);
 
