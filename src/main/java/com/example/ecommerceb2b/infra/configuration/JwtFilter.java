@@ -42,10 +42,10 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.replace("Bearer ", "");
 
             try {
-                var jwtValidate = tokenService.verificadorToken(token);
+                var usuarioLogado = tokenService.verificadorToken(token);
 
                 var user = new UsernamePasswordAuthenticationToken(
-                        jwtValidate.getSubject(), null, List.of()
+                        usuarioLogado.authorities(), null, List.of()
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(user);

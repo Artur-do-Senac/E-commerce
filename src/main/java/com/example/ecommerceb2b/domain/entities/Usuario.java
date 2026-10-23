@@ -2,6 +2,7 @@ package com.example.ecommerceb2b.domain.entities;
 
 import com.example.ecommerceb2b.application.DTOs.CriarAdminRequest;
 import com.example.ecommerceb2b.application.DTOs.EnumStatusUsuario;
+import com.example.ecommerceb2b.application.DTOs.UsuarioLogado;
 import com.example.ecommerceb2b.application.DTOs.UsuarioRequest;
 import com.example.ecommerceb2b.domain.valueobject.CPF;
 import com.example.ecommerceb2b.domain.valueobject.Telefone;
@@ -11,6 +12,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -85,9 +88,13 @@ public class Usuario implements UserDetails {
         this.setRole("ROLE_USER");
     }
 
+    public UsuarioLogado getUsuarioLogado() {
+        return (UsuarioLogado) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority(this.role));
     }
 
     @Override
