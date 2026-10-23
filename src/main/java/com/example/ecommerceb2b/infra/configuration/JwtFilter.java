@@ -23,17 +23,13 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String uri = request.getRequestURI();
-        String metodo = request.getMethod();
 
-        // Rotas públicas (as mesmas liberadas no SecurityConfiguration) e o pré-flight do CORS (OPTIONS) passam sem token
-        if(metodo.equals("OPTIONS")
-                || uri.startsWith("/swagger-ui")
+        if(uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
                 || uri.startsWith("/webjars")
-                || uri.equals("/auth/login")
-                || (uri.equals("/usuarios/admin") && metodo.equals("POST"))
+                || uri.startsWith("/auth/login")
         ){
             filterChain.doFilter(request, response);
             return;
@@ -42,14 +38,12 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")){
-            String token = authHeader.substring("Bearer ".length());
+            String token = authHeader.replace("Bearer ", "");
 
             try {
-                // Valida o JWT e consulta o token no banco (existe, ativo e dentro da validade)
                 var usuarioLogado = tokenService.verificadorToken(token);
 
-                // O usuário logado é o principal e as roles dele são as authorities:
-                // é isso que o hasRole/hasAnyRole do SecurityConfiguration consulta para liberar ou negar (403) cada endpoint
+                // O usuário logado é o principal e as roles dele são as authorities (é o que o hasRole/hasAnyRole do SecurityConfiguration consulta)
                 var user = new UsernamePasswordAuthenticationToken(
                         usuarioLogado, null, usuarioLogado.authorities()
                 );
@@ -58,21 +52,27 @@ public class JwtFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
 
-                tokenInvalido(response);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().println("Token inválido!");
                 return;
             }
         } else {
-            tokenInvalido(response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().println("Token inválido!");
             return;
         }
 
         filterChain.doFilter(request, response);
     }
-
-    private void tokenInvalido(HttpServletResponse response) throws IOException {
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("text/plain;charset=UTF-8");
-        response.getWriter().println("Token inválido!");
-    }
 }
+
+
+
+
+
+
+
+
+
+
+

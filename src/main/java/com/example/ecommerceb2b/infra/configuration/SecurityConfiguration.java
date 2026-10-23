@@ -17,8 +17,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  *   Endpoint                                                    ADMIN   GERENTE   USER
  *   POST /auth/login e Swagger                                  público, sem token
- *   POST /usuarios/admin (exige a secretKey no corpo)           público, sem token
- *   POST /auth/logout                                           qualquer usuário logado
  *   /usuarios (listar, buscar, criar, editar, status, excluir)  x
  *   /empresas (listar, buscar, criar, editar, status)           x       x
  *   /categorias e /produtos (listar, buscar)                    x       x         x
@@ -26,6 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *   /pedidos (listar, buscar, editar, status)                   x       x
  *   POST /pedidos (criar pedido)                                x       x         x
  *   DELETE em empresas, categorias, produtos e pedidos          x
+ *   Qualquer outra rota                                         basta estar logado
  */
 @Configuration
 @EnableWebSecurity
@@ -42,17 +41,12 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
 
                         // Públicas: não precisam de token
-                        // (/error é por onde o Spring devolve os erros reais, como 400 e 500: sem liberar, todo erro apareceria como 403)
                         .requestMatchers("/auth/login",
-                                "/error",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
                                 "/webjars/**",
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Criação de administrador: protegida pela secretKey enviada no corpo (o app JavaFX chama sem token)
-                        .requestMatchers(HttpMethod.POST, "/usuarios/admin").permitAll()
 
                         // Usuários: somente ADMIN
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
@@ -69,7 +63,7 @@ public class SecurityConfiguration {
                         // O que sobrou de empresas, categorias, produtos e pedidos (consultar, criar, editar e mudar status): ADMIN e GERENTE
                         .requestMatchers("/empresas/**", "/categorias/**", "/produtos/**", "/pedidos/**").hasAnyRole("ADMIN", "GERENTE")
 
-                        // Qualquer outra rota (ex.: /auth/logout): basta estar logado
+                        // Qualquer outra rota: basta estar logado
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

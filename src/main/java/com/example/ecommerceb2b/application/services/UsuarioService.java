@@ -25,11 +25,9 @@ public class UsuarioService {
     public LoginResponse validarUsuarioAutenticadoRetornaToken (LoginRequest request){
 
         // Usuário excluído (status EXCLUIDO) não consegue mais entrar no sistema
-        var usuarioAutenticado = usuarioRepository.findFirstByEmailAndSenhaAndStatusNot(request.email(), request.senha(), EnumStatusUsuario.EXCLUIDO).orElse(null);
+        if (usuarioRepository.existsUsuarioByEmailAndSenhaAndStatusNot(request.email(), request.senha(), EnumStatusUsuario.EXCLUIDO)) {
 
-        if (usuarioAutenticado != null) {
-
-            var token = tokenService.gerarToken(usuarioAutenticado);
+            var token = tokenService.gerarToken(request.email());
 
             return new LoginResponse((token));
         }
@@ -76,7 +74,6 @@ public class UsuarioService {
             usuarioBanco.setNome(usuario.nome());
             usuarioBanco.setCpf(new CPF(usuario.cpf()));
             usuarioBanco.informarTelefone(usuario.telefone());
-            usuarioBanco.informarRole(usuario.role());
             usuarioBanco.setEmail(usuario.email());
             usuarioBanco.setSenha(usuario.senha());
             usuarioRepository.save(usuarioBanco);

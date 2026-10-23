@@ -1,7 +1,6 @@
 package com.example.ecommerceb2b.domain.entities;
 
 import com.example.ecommerceb2b.application.DTOs.CriarAdminRequest;
-import com.example.ecommerceb2b.application.DTOs.EnumRoleUsuario;
 import com.example.ecommerceb2b.application.DTOs.EnumStatusUsuario;
 import com.example.ecommerceb2b.application.DTOs.UsuarioLogado;
 import com.example.ecommerceb2b.application.DTOs.UsuarioRequest;
@@ -38,8 +37,7 @@ public class Usuario implements UserDetails {
     private Telefone telefone;
     private String senha;
     private String email;
-    @Enumerated(EnumType.STRING)
-    private EnumRoleUsuario role = EnumRoleUsuario.ROLE_USER;
+    private String role = "ROLE_USER";
 
     private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
 
@@ -73,19 +71,12 @@ public class Usuario implements UserDetails {
         }
     }
 
-    // O papel (role) é opcional: só é trocado quando vier preenchido (um usuário novo começa como ROLE_USER)
-    public void informarRole(EnumRoleUsuario role) {
-        if (role != null) {
-            this.setRole(role);
-        }
-    }
-
     public Usuario(CriarAdminRequest criarAdminRequest) {
         this.setCpf(new CPF (criarAdminRequest.cpf()));
         this.setNome(criarAdminRequest.nome());
         this.setSenha(criarAdminRequest.senha());
         this.setEmail(criarAdminRequest.email());
-        this.setRole(EnumRoleUsuario.ROLE_ADMIN);
+        this.setRole("ROLE_ADMIN");
     }
 
     public Usuario(UsuarioRequest usuario) {
@@ -94,7 +85,7 @@ public class Usuario implements UserDetails {
         this.setNome(usuario.nome());
         this.setSenha(usuario.senha());
         this.setEmail(usuario.email());
-        this.informarRole(usuario.role());
+        this.setRole("ROLE_USER");
     }
 
     public UsuarioLogado getUsuarioLogado() {
@@ -103,11 +94,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Usuário sem role (ex.: cadastrado antes da role existir) fica sem nenhuma permissão
-        if (this.role == null) {
-            return List.of();
-        }
-        return List.of(new SimpleGrantedAuthority(this.role.name()));
+        return List.of(new SimpleGrantedAuthority(this.role));
     }
 
     @Override

@@ -19,8 +19,6 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // JWT completo, o mesmo que foi devolvido no login. É único: cada login gera um token diferente
-    @Column(nullable = false, unique = true, length = 512)
     private String token;
 
     private LocalDateTime dataCadastro;
@@ -28,7 +26,7 @@ public class Token {
     // Quando o token deixa de valer (é a mesma data que vai dentro do JWT)
     private LocalDateTime dataExpiracao;
 
-    // Vira false no logout: o token continua salvo no banco (histórico), mas não é mais aceito
+    // Token ativo: se estiver false ele continua salvo no banco, mas não é mais aceito
     @ColumnDefault("true")
     private boolean ativo = true;
 
@@ -47,9 +45,5 @@ public class Token {
     // Regra do domínio: o token só vale enquanto estiver ativo e dentro da validade
     public boolean estaValido() {
         return ativo && dataExpiracao != null && LocalDateTime.now().isBefore(dataExpiracao);
-    }
-
-    public void invalidar() {
-        this.ativo = false;
     }
 }
