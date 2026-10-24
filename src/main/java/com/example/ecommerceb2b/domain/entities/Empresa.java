@@ -4,15 +4,12 @@ package com.example.ecommerceb2b.domain.entities;
 import com.example.ecommerceb2b.application.DTOs.EmpresaRequest;
 import com.example.ecommerceb2b.application.DTOs.EnumStatusEmpresa;
 import com.example.ecommerceb2b.domain.valueobject.Telefone;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -25,6 +22,11 @@ public class Empresa {
     private Long id;
     private String razaoSocial;
     private String cnpj;
+
+    @OneToMany(mappedBy = "empresa")
+    private List<Usuario> usuarios;
+
+
 
     @Embedded
     private Telefone telefone;

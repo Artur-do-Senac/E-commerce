@@ -6,6 +6,7 @@ import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import com.example.ecommerceb2b.domain.valueobject.CPF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,12 +35,23 @@ public class UsuarioService {
         return null;
     }
 
-    // Retorna todos os usuários, menos os excluídos (exclusão lógica: status EXCLUIDO)
+    // O usuário logado é o principal que o JwtFilter colocou no contexto de segurança
+    private UsuarioLogado getUsuarioLogado() {
+        return (UsuarioLogado) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    // Retorna os usuários da empresa de quem está logado, menos os excluídos (exclusão lógica: status EXCLUIDO)
+    // Quem não pertence a nenhuma empresa (ex.: o ADMIN) enxerga os usuários de todas
     public List<UsuarioResponse> listarTodos() {
 
-        return usuarioRepository.findByStatusNot(EnumStatusUsuario.EXCLUIDO)
-                .orElse(List.of())
-                .stream()
+        var usuarioLogado = getUsuarioLogado();
+
+        List<Usuario> usuarios = usuarioLogado.empresa_id() == null
+                ? usuarioRepository.findByStatusNot(EnumStatusUsuario.EXCLUIDO).orElse(List.of())
+                : usuarioRepository.getUsuariosByEmpresa_id(usuarioLogado.empresa_id());
+
+        return usuarios.stream()
+                .filter(usuario -> usuario.getStatus() != EnumStatusUsuario.EXCLUIDO)
                 .map(UsuarioResponse::new)
                 .toList();
     }

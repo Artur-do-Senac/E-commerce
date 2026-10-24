@@ -39,6 +39,12 @@ public class Usuario implements UserDetails {
     private String email;
     private String role = "ROLE_USER";
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "empresa_id", referencedColumnName = "id")
+    private Empresa empresa;
+
+
+
     private EnumStatusUsuario status = EnumStatusUsuario.ATIVO;
 
     // Regras do domínio: o que não for válido lança erro (a Controller transforma em 400 com a mensagem)
