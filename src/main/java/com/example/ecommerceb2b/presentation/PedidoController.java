@@ -1,5 +1,6 @@
 package com.example.ecommerceb2b.presentation;
 
+import com.example.ecommerceb2b.application.DTOs.AdicionarProdutoRequest;
 import com.example.ecommerceb2b.application.DTOs.AttStatusPedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoResponse;
@@ -66,6 +67,19 @@ public class PedidoController {
 
         // false significa que não existe pedido com esse ID
         if (pedidoComStatusAtualizado) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PatchMapping("/{id}/adicionar-produto")
+    @Operation(summary = "Adiciona um produto ao pedido", description = "Vincula um produto da empresa ao pedido no sistema")
+    public ResponseEntity<Void> adicionarProduto(@PathVariable Long id, @RequestBody AdicionarProdutoRequest adicionarProdutoRequest) {
+
+        var produtoAdicionado = pedidoService.adicionarProduto(id, adicionarProdutoRequest);
+
+        // false significa que não existe pedido ou produto com esse ID (ou que são de outra empresa)
+        if (produtoAdicionado) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
