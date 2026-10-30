@@ -1,7 +1,7 @@
 'use client'
 
 import { Empresa } from "@/app/types/empresa";
-import axios from "axios";
+import { buscarListaEmpresas, deletarEmpresa } from "@/app/services/empresaService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -16,9 +16,9 @@ export default function Empresas() {
     const carregarDados = async ()=>{
 
         try {
-            const dados = await axios.get<Empresa[]>("http://localhost:8080/empresas")
+            const dados = await buscarListaEmpresas();
 
-            setEmpresas(dados.data);
+            setEmpresas(dados);
         } catch (error) {
             alert("Erro ao carregar dados")
         }
@@ -27,7 +27,7 @@ export default function Empresas() {
 
     const handlerDeletarEmpresa = async(empresa: Empresa)=> {
         try {
-            await axios.delete('http://localhost:8080/empresas/'+empresa.id+'/excluir')
+            await deletarEmpresa(empresa.id || 0)
             alert("Empresa foi excluída com sucesso!");
         } catch (error) {
             alert("Erro ao excluir empresa");

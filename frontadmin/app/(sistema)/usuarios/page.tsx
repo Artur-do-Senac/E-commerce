@@ -1,7 +1,7 @@
 'use client'
 
+import { atualizarStatusUsuario, buscarListaUsuarios, deletarUsuario } from "@/app/services/usuarioService";
 import { Usuario } from "@/app/types/usuario";
-import axios from "axios";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -15,10 +15,8 @@ export default function Usuarios() {
 
     const carregarDados = async ()=>{
 
-        try {
-        const dados = await axios.get<Usuario[]>("http://localhost:8080/usuarios")
-
-        setUsuarios(dados.data);
+        try {const dados = await buscarListaUsuarios();
+            setUsuarios(dados)
     } catch (error) {
         alert("Erro ao carregar dados")
     }
@@ -27,24 +25,14 @@ export default function Usuarios() {
 
     const handlerAlterarStatusUsuario = async(usuario: Usuario)=> {
 
-        const novoStatus = {
-            statusUsuario: usuario.status === "ATIVO" ? "INATIVO" : "ATIVO"
-        };
-
-        try {
-            await axios.patch('http://localhost:8080/usuarios/'+usuario.id+'/status', novoStatus)
-            alert("Status atualizado com sucesso!");
-        } catch (error) {
-            alert("Erro ao atualizar status");
-            return;
-        }
+        await atualizarStatusUsuario(usuario);
 
         carregarDados();
     }
 
     const handlerDeletarUsuario = async(usuario: Usuario)=> {
         try {
-            await axios.delete('http://localhost:8080/usuarios/'+usuario.id+'/excluir')
+            await deletarUsuario(usuario.id || 0)
             alert("Usuário foi excluído com sucesso!");
         } catch (error) {
             alert("Erro ao excluir usuário");

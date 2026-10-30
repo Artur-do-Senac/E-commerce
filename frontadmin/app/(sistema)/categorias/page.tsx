@@ -1,7 +1,7 @@
 'use client'
 
 import { Categoria } from "@/app/types/categoria";
-import axios from "axios";
+import { buscarListaCategorias, deletarCategoria } from "@/app/services/categoriaService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -14,9 +14,9 @@ export default function Categorias() {
         const carregarDados = async ()=>{
 
             try {
-                const dados = await axios.get<Categoria[]>("http://localhost:8080/categorias")
+                const dados = await buscarListaCategorias();
 
-                setCategorias(dados.data);
+                setCategorias(dados);
             } catch (error) {
                 alert("Erro ao carregar dados")
             }
@@ -28,7 +28,7 @@ export default function Categorias() {
 
     const handlerDeletarCategoria = async(categoria: Categoria)=> {
         try {
-            await axios.delete('http://localhost:8080/categorias/'+categoria.id+'/excluir')
+            await deletarCategoria(categoria.id || 0)
             alert("Categoria foi excluída com sucesso!");
         } catch (error) {
             alert("Erro ao excluir categoria. Verifique se ela não está sendo usada por alguma empresa.");

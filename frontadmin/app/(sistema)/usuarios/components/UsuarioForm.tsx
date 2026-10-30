@@ -1,7 +1,7 @@
 'use client'
 
+import { atualizarUsuario, salvarUsuario } from "@/app/services/usuarioService";
 import { Usuario, UsuarioFormProp } from "@/app/types/usuario";
-import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,10 +25,10 @@ export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
 
     const handlerSalvar = async (formData : FormData) => {
         try {
-            if (usuario.id) {
-                await axios.put('http://localhost:8080/usuarios/'+usuario.id, usuario)
+            if (usuarioExistente) {
+                await atualizarUsuario(usuario);
             } else {
-                await axios.post('http://localhost:8080/usuarios', usuario)
+                await salvarUsuario(usuario);
             }
             alert("Usuário foi salvo com sucesso!");
         } catch (error) {

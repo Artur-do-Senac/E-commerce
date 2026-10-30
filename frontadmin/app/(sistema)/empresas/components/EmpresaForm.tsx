@@ -2,7 +2,8 @@
 
 import { Categoria } from "@/app/types/categoria";
 import { Empresa, EmpresaFormProp } from "@/app/types/empresa";
-import axios from "axios";
+import { atualizarEmpresa, salvarEmpresa } from "@/app/services/empresaService";
+import { buscarListaCategorias } from "@/app/services/categoriaService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,9 +21,9 @@ export default function EmpresaForm({empresaExistente}:EmpresaFormProp){
         const carregarCategorias = async ()=>{
 
             try {
-                const dados = await axios.get<Categoria[]>("http://localhost:8080/categorias")
+                const dados = await buscarListaCategorias();
 
-                setCategorias(dados.data);
+                setCategorias(dados);
             } catch (error) {
                 alert("Erro ao carregar categorias")
             }
@@ -49,9 +50,9 @@ export default function EmpresaForm({empresaExistente}:EmpresaFormProp){
 
         try {
             if (empresa.id) {
-                await axios.put('http://localhost:8080/empresas/'+empresa.id, empresaRequest)
+                await atualizarEmpresa(empresaRequest);
             } else {
-                await axios.post('http://localhost:8080/empresas', empresaRequest)
+                await salvarEmpresa(empresaRequest);
             }
             alert("Empresa foi salva com sucesso!");
         } catch (error) {

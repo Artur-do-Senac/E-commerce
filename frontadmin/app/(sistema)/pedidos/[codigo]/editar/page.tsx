@@ -4,7 +4,7 @@ import PedidoForm from "../../components/PedidoForm";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pedido } from "@/app/types/pedido";
-import axios from "axios";
+import { consultaPedidoPorId } from "@/app/services/pedidoService";
 
 export default function EditarPedido(){
 
@@ -19,8 +19,8 @@ export default function EditarPedido(){
     const buscarDados = async() => {
 
         try {
-            const valorPedidoBack = await axios.get<Pedido>('http://localhost:8080/pedidos/'+codigo);
-            setPedido(valorPedidoBack.data)
+            const valorPedidoBack = await consultaPedidoPorId(codigo);
+            setPedido(valorPedidoBack)
         } catch (error) {
             alert("Pedido não encontrado!")
             router.push("/pedidos")

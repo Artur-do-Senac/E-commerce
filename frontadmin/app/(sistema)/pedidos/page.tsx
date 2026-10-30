@@ -1,7 +1,7 @@
 'use client'
 
 import { Pedido } from "@/app/types/pedido";
-import axios from "axios";
+import { buscarListaPedidos, deletarPedido } from "@/app/services/pedidoService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -16,9 +16,9 @@ export default function Pedidos() {
     const carregarDados = async ()=>{
 
         try {
-            const dados = await axios.get<Pedido[]>("http://localhost:8080/pedidos")
+            const dados = await buscarListaPedidos();
 
-            setPedidos(dados.data);
+            setPedidos(dados);
         } catch (error) {
             alert("Erro ao carregar dados")
         }
@@ -27,7 +27,7 @@ export default function Pedidos() {
 
     const handlerDeletarPedido = async(pedido: Pedido)=> {
         try {
-            await axios.delete('http://localhost:8080/pedidos/'+pedido.id+'/excluir')
+            await deletarPedido(pedido.id || 0)
             alert("Pedido foi excluído com sucesso!");
         } catch (error) {
             alert("Erro ao excluir pedido");

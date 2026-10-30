@@ -1,7 +1,7 @@
 'use client'
 
 import { Produto, ProdutoFormProp } from "@/app/types/produto";
-import axios from "axios";
+import { atualizarProduto, salvarProduto } from "@/app/services/produtoService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,9 +30,9 @@ export default function ProdutoForm({produtoExistente}:ProdutoFormProp){
 
         try {
             if (produto.id) {
-                await axios.put('http://localhost:8080/produtos/'+produto.id, produto)
+                await atualizarProduto(produto);
             } else {
-                await axios.post('http://localhost:8080/produtos', produto)
+                await salvarProduto(produto);
             }
             alert("Produto foi salvo com sucesso!");
         } catch (error) {

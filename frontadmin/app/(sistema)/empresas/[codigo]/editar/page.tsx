@@ -4,7 +4,7 @@ import EmpresaForm from "../../components/EmpresaForm";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Empresa } from "@/app/types/empresa";
-import axios from "axios";
+import { consultaEmpresaPorId } from "@/app/services/empresaService";
 
 export default function EditarEmpresa(){
 
@@ -19,8 +19,8 @@ export default function EditarEmpresa(){
     const buscarDados = async() => {
 
         try {
-            const valorEmpresaBack = await axios.get<Empresa>('http://localhost:8080/empresas/'+codigo);
-            setEmpresa(valorEmpresaBack.data)
+            const valorEmpresaBack = await consultaEmpresaPorId(codigo);
+            setEmpresa(valorEmpresaBack)
         } catch (error) {
             alert("Empresa não encontrada!")
             router.push("/empresas")

@@ -1,7 +1,7 @@
 'use client'
 
 import { Pedido, PedidoFormProp } from "@/app/types/pedido";
-import axios from "axios";
+import { atualizarPedido, salvarPedido } from "@/app/services/pedidoService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,9 +29,9 @@ export default function PedidoForm({pedidoExistente}:PedidoFormProp){
 
         try {
             if (pedido.id) {
-                await axios.put('http://localhost:8080/pedidos/'+pedido.id, pedido)
+                await atualizarPedido(pedido);
             } else {
-                await axios.post('http://localhost:8080/pedidos', pedido)
+                await salvarPedido(pedido);
             }
             alert("Pedido foi salvo com sucesso!");
         } catch (error) {

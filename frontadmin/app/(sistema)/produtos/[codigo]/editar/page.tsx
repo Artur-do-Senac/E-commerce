@@ -4,7 +4,7 @@ import ProdutoForm from "../../components/ProdutoForm";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Produto } from "@/app/types/produto";
-import axios from "axios";
+import { consultaProdutoPorId } from "@/app/services/produtoService";
 
 export default function EditarProduto(){
 
@@ -19,8 +19,8 @@ export default function EditarProduto(){
     const buscarDados = async() => {
 
         try {
-            const valorProdutoBack = await axios.get<Produto>('http://localhost:8080/produtos/'+codigo);
-            setProduto(valorProdutoBack.data)
+            const valorProdutoBack = await consultaProdutoPorId(codigo);
+            setProduto(valorProdutoBack)
         } catch (error) {
             alert("Produto não encontrado!")
             router.push("/produtos")

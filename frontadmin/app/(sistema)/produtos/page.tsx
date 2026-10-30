@@ -1,7 +1,7 @@
 'use client'
 
 import { Produto } from "@/app/types/produto";
-import axios from "axios";
+import { buscarListaProdutos, deletarProduto } from "@/app/services/produtoService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -16,9 +16,9 @@ export default function Produtos() {
     const carregarDados = async ()=>{
 
         try {
-            const dados = await axios.get<Produto[]>("http://localhost:8080/produtos")
+            const dados = await buscarListaProdutos();
 
-            setProdutos(dados.data);
+            setProdutos(dados);
         } catch (error) {
             alert("Erro ao carregar dados")
         }
@@ -27,7 +27,7 @@ export default function Produtos() {
 
     const handlerDeletarProduto = async(produto: Produto)=> {
         try {
-            await axios.delete('http://localhost:8080/produtos/'+produto.id+'/excluir')
+            await deletarProduto(produto.id || 0)
             alert("Produto foi excluído com sucesso!");
         } catch (error) {
             alert("Erro ao excluir produto");

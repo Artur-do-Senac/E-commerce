@@ -4,7 +4,7 @@ import CategoriaForm from "../../components/CategoriaForm";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Categoria } from "@/app/types/categoria";
-import axios from "axios";
+import { consultaCategoriaPorId } from "@/app/services/categoriaService";
 
 export default function EditarCategoria(){
 
@@ -21,8 +21,8 @@ export default function EditarCategoria(){
         const buscarDados = async() => {
 
             try {
-                const valorCategoriaBack = await axios.get<Categoria>('http://localhost:8080/categorias/'+codigo);
-                setCategoria(valorCategoriaBack.data)
+                const valorCategoriaBack = await consultaCategoriaPorId(codigo);
+                setCategoria(valorCategoriaBack)
             } catch (error) {
                 alert("Categoria não encontrada!")
                 router.push("/categorias")

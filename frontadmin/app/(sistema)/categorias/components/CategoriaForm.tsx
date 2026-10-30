@@ -1,7 +1,7 @@
 'use client'
 
 import { Categoria, CategoriaFormProp } from "@/app/types/categoria";
-import axios from "axios";
+import { atualizarCategoria, salvarCategoria } from "@/app/services/categoriaService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,9 +24,9 @@ export default function CategoriaForm({categoriaExistente}:CategoriaFormProp){
 
         try {
             if (categoria.id) {
-                await axios.put('http://localhost:8080/categorias/'+categoria.id, categoria)
+                await atualizarCategoria(categoria);
             } else {
-                await axios.post('http://localhost:8080/categorias', categoria)
+                await salvarCategoria(categoria);
             }
             alert("Categoria foi salva com sucesso!");
         } catch (error) {
