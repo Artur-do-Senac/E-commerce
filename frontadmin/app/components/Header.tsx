@@ -1,13 +1,25 @@
 'use client'
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { logout } from "../redux/slices/authSlice";
 
 export default function Header(){
 
-    const router = useRouter();
+    const usuario = useSelector((state:RootState) => state.auth.usuario);
+
+    const dispatch = useDispatch();
+
+    // o usuário vem do cookie, que só existe no navegador: o nome só aparece depois de montar, para o HTML do servidor ser igual ao primeiro render do cliente
+    const [montado, setMontado] = useState(false);
+
+    useEffect(() => {
+        setMontado(true);
+    }, []);
 
     const handlerSair = () => {
-        router.push("/login")
+        dispatch(logout());
     }
 
     return(<>
@@ -21,7 +33,7 @@ export default function Header(){
                             <circle/>
                         </svg>
                     </div>
-                    <span className="text-sm font-semibold tracking-tight text-slate-700"> Usuário Artur Seixas</span>
+                    <span className="text-sm font-semibold tracking-tight text-slate-700">{montado && usuario ? usuario.nome.toLocaleUpperCase() : 'Usuário não identificado!'}</span>
                 </div>
                 <button onClick={handlerSair} className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-accent-500 hover:bg-accent-100 hover:text-accent-600 focus:outline-none focus:ring-4 focus:ring-accent-100 active:scale-[0.98]">Sair</button>
             </div>

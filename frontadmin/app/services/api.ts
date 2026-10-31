@@ -20,3 +20,7 @@ api.interceptors.request.use(
 );
 
 export default api;
+
+/*
+tiramos as chamadas axios das páginas e as movemos para um service. O token passa a ficar num cookie e a ser enviado em toda requisição.
+*/

@@ -110,6 +110,20 @@ public class UsuarioService {
         return false;
     }
 
+    // Retorna os dados do usuário dono do token (o principal que o JwtFilter colocou no contexto de segurança)
+    public UsuarioResponse buscarUsuarioLogado() {
+        try {
+            var usuarioLogado = getUsuarioLogado();
+
+            return usuarioRepository.findById(usuarioLogado.id())
+                    .map(UsuarioResponse::new)
+                    .orElse(null);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao buscar usuário logado!");
+        }
+    }
+
     public CriarAdminResponse criarAdmin(CriarAdminRequest criarAdminRequest) {
 
         if (!criarAdminRequest.secretKey().equals(secret)){
