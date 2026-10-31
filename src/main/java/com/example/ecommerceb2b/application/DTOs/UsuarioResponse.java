@@ -2,7 +2,7 @@ package com.example.ecommerceb2b.application.DTOs;
 
 import com.example.ecommerceb2b.domain.entities.Usuario;
 
-public record UsuarioResponse(Long id, String nome, String cpf, String telefone, String email, EnumStatusUsuario status) {
+public record UsuarioResponse(Long id, String nome, String cpf, String telefone, String email, EnumStatusUsuario status, String perfil, Long empresaId, String empresaNome) {
 
     public UsuarioResponse(Usuario usuarioEntidade) {
 
@@ -12,7 +12,10 @@ public record UsuarioResponse(Long id, String nome, String cpf, String telefone,
         usuarioEntidade.getCpf() == null ? null : usuarioEntidade.getCpf().toString(),
         usuarioEntidade.getTelefone() == null ? null : usuarioEntidade.getTelefone().toString(),
         usuarioEntidade.getEmail(),
-        usuarioEntidade.getStatus()
+        usuarioEntidade.getStatus(),
+        usuarioEntidade.getRole().replace("ROLE_", ""),
+        usuarioEntidade.getEmpresa() == null ? null : usuarioEntidade.getEmpresa().getId(),
+        usuarioEntidade.getEmpresa() == null ? null : usuarioEntidade.getEmpresa().getRazaoSocial()
         );
     }
 }

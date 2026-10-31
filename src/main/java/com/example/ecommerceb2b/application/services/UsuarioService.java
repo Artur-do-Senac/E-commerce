@@ -1,7 +1,9 @@
 package com.example.ecommerceb2b.application.services;
 
 import com.example.ecommerceb2b.application.DTOs.*;
+import com.example.ecommerceb2b.domain.entities.Empresa;
 import com.example.ecommerceb2b.domain.entities.Usuario;
+import com.example.ecommerceb2b.domain.repository.EmpresaRepository;
 import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import com.example.ecommerceb2b.domain.valueobject.CPF;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,9 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private EmpresaRepository empresaRepository;
 
     @Autowired
     private TokenService tokenService;
@@ -71,9 +76,12 @@ public class UsuarioService {
     // CPF ou e-mail inválido lança IllegalArgumentException (a Controller transforma em 400 com a mensagem)
     public UsuarioResponse salvarUsuario(UsuarioRequest usuario, Long id) {
 
+        // Empresa do usuário. Se não existir, fica null e a entidade recusa com "Empresa Invalida!" (exceto para ADMIN)
+        Empresa empresa = usuario.empresaId() == null ? null : empresaRepository.findById(usuario.empresaId()).orElse(null);
+
         // Novo usuário
         if (id == 0L) {
-            Usuario usuarioBanco = new Usuario(usuario);
+            Usuario usuarioBanco = new Usuario(usuario, empresa);
             usuarioRepository.save(usuarioBanco);
 
             return new UsuarioResponse(usuarioBanco);
@@ -88,6 +96,8 @@ public class UsuarioService {
             usuarioBanco.informarTelefone(usuario.telefone());
             usuarioBanco.setEmail(usuario.email());
             usuarioBanco.setSenha(usuario.senha());
+            usuarioBanco.informarPerfil(usuario.perfil());
+            usuarioBanco.informarEmpresa(empresa);
             usuarioRepository.save(usuarioBanco);
 
             return new UsuarioResponse(usuarioBanco);
@@ -124,10 +134,16 @@ public class UsuarioService {
         }
     }
 
+    // Cold start: cria o primeiro ADMIN (chamado pelo app desktop, sem token)
+    // Só funciona com a chave secreta correta e enquanto não existir nenhum ADMIN; senão lança IllegalArgumentException (a Controller transforma em 400 com a mensagem)
     public CriarAdminResponse criarAdmin(CriarAdminRequest criarAdminRequest) {
 
-        if (!criarAdminRequest.secretKey().equals(secret)){
-            return new CriarAdminResponse(0L, "Usuário salvo com sucesso!");
+        if (criarAdminRequest.secretKey() == null || !criarAdminRequest.secretKey().equals(secret)){
+            throw new IllegalArgumentException("Chave secreta invalida!");
+        }
+
+        if (usuarioRepository.existsByRole("ROLE_ADMIN")) {
+            throw new IllegalArgumentException("Ja existe um administrador cadastrado!");
         }
 
         Usuario usuarioAdminSalvar = new Usuario(criarAdminRequest);

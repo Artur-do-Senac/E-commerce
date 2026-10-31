@@ -12,9 +12,11 @@ import javafx.stage.Stage;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class UsuarioController {
 
@@ -30,6 +32,9 @@ public class UsuarioController {
     @FXML
     private PasswordField txtSenha;
 
+    // Mensagem que o back devolveu quando a resposta não foi 200 (ex.: "Ja existe um administrador cadastrado!")
+    private String mensagemErro = "";
+
 
 
     @FXML
@@ -37,14 +42,23 @@ public class UsuarioController {
         if (!txtNome.getText().isEmpty() && !txtCpf.getText().isEmpty() && !txtEmail.getText().isEmpty() && !txtSenha.getText().isEmpty()) {
 
 
+            // escapar() evita que aspas ou barras digitadas nos campos quebrem o JSON
             String jsonRequest = String.format("{\n" +
                     "  \"nome\": \"%s\",\n" +
                     "  \"email\": \"%s\",\n" +
                     "  \"senha\": \"%s\",\n" +
                     "  \"cpf\": \"%s\",\n" +
                     "  \"secretKey\": \"%s\"\n" +
-                    "}", txtNome.getText(), txtEmail.getText(), txtSenha.getText(), txtCpf.getText(), "4fdmnbwer382j3blkdbf8932");
-            int respostaAPI = ExecutarMetodoAPI("http://localhost:8080/usuarios/admin", jsonRequest, "POST");
+                    "}", escapar(txtNome.getText()), escapar(txtEmail.getText()), escapar(txtSenha.getText()), escapar(txtCpf.getText()), "4fdmnbwer382j3blkdbf8932");
+
+            int respostaAPI;
+
+            try {
+                respostaAPI = ExecutarMetodoAPI("http://localhost:8080/usuarios/admin", jsonRequest, "POST");
+            } catch (IOException e) {
+                showMessage(Alert.AlertType.ERROR, "Não foi possível conectar ao servidor. Verifique se o back-end está rodando!");
+                return;
+            }
 
             if(respostaAPI==200) {
                 showMessage(Alert.AlertType.INFORMATION, "Usuário foi salvo com sucesso!");
@@ -56,7 +70,7 @@ public class UsuarioController {
 
                 stage.setScene(scene);
             }else {
-                showMessage(Alert.AlertType.ERROR, "Erro ao salvar usuário!");
+                showMessage(Alert.AlertType.ERROR, mensagemErro.isBlank() ? "Erro ao salvar usuário!" : "Erro ao salvar usuário: " + mensagemErro);
             }
         } else {
             showMessage(Alert.AlertType.ERROR, "Erro ao salvar usuário!");
@@ -103,13 +117,29 @@ public class UsuarioController {
             connection.setRequestProperty("Content-Type", "application/json");
 
             try (OutputStream os = connection.getOutputStream()) {
-                os.write(json.getBytes());
+                os.write(json.getBytes(StandardCharsets.UTF_8));
             }
 
         }
 
-        return connection.getResponseCode();
+        int codigo = connection.getResponseCode();
 
+        // Quando o back recusa (400, 401...), a mensagem vem no corpo do erro
+        mensagemErro = "";
+        if (codigo != 200) {
+            try (InputStream erro = connection.getErrorStream()) {
+                if (erro != null) {
+                    mensagemErro = new String(erro.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+
+        return codigo;
+
+    }
+
+    private String escapar(String texto) {
+        return texto.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
 }

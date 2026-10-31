@@ -29,13 +29,15 @@ public class UsuarioController {
     }
 
     @PostMapping("/admin")
-    public ResponseEntity<CriarAdminResponse> criarAdmin (@RequestBody CriarAdminRequest criarAdminRequest) {
+    @Operation(summary = "Cria o primeiro administrador (cold start)", description = "Endpoint público usado pelo app desktop para criar o primeiro ADMIN do sistema. Só funciona com a chave secreta correta e enquanto não existir nenhum ADMIN.")
+    public ResponseEntity<?> criarAdmin (@RequestBody CriarAdminRequest criarAdminRequest) {
 
         try {
             CriarAdminResponse respostaSalvar = usuarioService.criarAdmin(criarAdminRequest);
             return ResponseEntity.ok(respostaSalvar);
         } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().build();
+            // Chave secreta errada, já existe ADMIN ou dado inválido (CPF, e-mail...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
 
     }

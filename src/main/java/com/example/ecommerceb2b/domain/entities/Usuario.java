@@ -85,13 +85,33 @@ public class Usuario implements UserDetails {
         this.setRole("ROLE_ADMIN");
     }
 
-    public Usuario(UsuarioRequest usuario) {
+    // O perfil é ADMIN, GERENTE ou USER. Vazio mantém o que já existe (USER para um usuário novo)
+    public void informarPerfil(String perfil) {
+        if (perfil == null || perfil.isBlank()) {
+            return;
+        }
+        if (!List.of("ADMIN", "GERENTE", "USER").contains(perfil)) {
+            throw new IllegalArgumentException("Perfil Invalido!");
+        }
+        this.role = "ROLE_" + perfil;
+    }
+
+    // Multilocação: todo usuário pertence a uma empresa, só o ADMIN (global) pode ficar sem. Por isso o perfil é definido antes
+    public void informarEmpresa(Empresa empresa) {
+        if (empresa == null && !"ROLE_ADMIN".equals(this.role)) {
+            throw new IllegalArgumentException("Empresa Invalida!");
+        }
+        this.empresa = empresa;
+    }
+
+    public Usuario(UsuarioRequest usuario, Empresa empresa) {
         this.setCpf(new CPF (usuario.cpf()));
         this.informarTelefone(usuario.telefone());
         this.setNome(usuario.nome());
         this.setSenha(usuario.senha());
         this.setEmail(usuario.email());
-        this.setRole("ROLE_USER");
+        this.informarPerfil(usuario.perfil());
+        this.informarEmpresa(empresa);
     }
 
     public UsuarioLogado getUsuarioLogado() {

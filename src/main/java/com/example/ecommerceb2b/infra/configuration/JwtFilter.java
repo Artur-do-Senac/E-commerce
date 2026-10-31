@@ -56,11 +56,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 response.getWriter().println("Token inválido!");
                 return;
             }
-        } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().println("Token inválido!");
-            return;
         }
+        // Sem token o filtro só segue a cadeia: quem decide se a rota exige login é o SecurityConfiguration
+        // (rota protegida sem token = 401 pelo authenticationEntryPoint; rota liberada = passa direto)
 
         filterChain.doFilter(request, response);
     }
