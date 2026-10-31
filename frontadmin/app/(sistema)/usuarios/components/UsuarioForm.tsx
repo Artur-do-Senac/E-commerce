@@ -1,25 +1,48 @@
 'use client'
 
 import { atualizarUsuario, salvarUsuario } from "@/app/services/usuarioService";
+import { buscarListaEmpresas } from "@/app/services/empresaService";
+import { Empresa } from "@/app/types/empresa";
 import { Usuario, UsuarioFormProp } from "@/app/types/usuario";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
 
     const router = useRouter();
 
-    const [usuario, setUsuario] = useState<Usuario>(usuarioExistente ?? new Usuario(null, "", "", "ATIVO", "", ""));
-    
-    const handlerChange = ( campo : 'nome' | 'email' | 'cpf' | 'senha', valor : string) =>{
-        setUsuario(valorAnterior => new Usuario(valorAnterior.id, 
-            campo === 'nome' ? valor : valorAnterior.nome, 
+    const [usuario, setUsuario] = useState<Usuario>(usuarioExistente ?? new Usuario(null, "", "", "ATIVO", "", "", null, "USER"));
+
+    const [empresas, setEmpresas] = useState<Empresa[]>([])
+
+    useEffect(()=>{
+
+        const carregarEmpresas = async ()=>{
+
+            try {
+                const dados = await buscarListaEmpresas();
+
+                setEmpresas(dados);
+            } catch (error) {
+                alert("Erro ao carregar empresas")
+            }
+
+        }
+
+        carregarEmpresas();
+    },[]);
+
+    const handlerChange = ( campo : 'nome' | 'email' | 'cpf' | 'senha' | 'perfil' | 'empresaId', valor : string) =>{
+        setUsuario(valorAnterior => new Usuario(valorAnterior.id,
+            campo === 'nome' ? valor : valorAnterior.nome,
             campo === 'email' ? valor : valorAnterior.email,
             valorAnterior.status,
             campo === 'cpf' ? valor : valorAnterior.cpf,
-            campo === 'senha' ? valor : valorAnterior.senha
-            )        
+            campo === 'senha' ? valor : valorAnterior.senha,
+            campo === 'empresaId' ? (valor === "" ? null : Number(valor)) : valorAnterior.empresaId,
+            campo === 'perfil' ? valor : valorAnterior.perfil
+            )
         )
     }
 
@@ -32,7 +55,10 @@ export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
             }
             alert("Usuário foi salvo com sucesso!");
         } catch (error) {
-            alert("Erro ao salvar usuário");
+            // o back responde 400 com a mensagem da validação (ex.: "Empresa Invalida!") no corpo
+            const mensagemBack = (error as { response?: { data?: unknown } }).response?.data;
+
+            alert(typeof mensagemBack === "string" && mensagemBack ? mensagemBack : "Erro ao salvar usuário");
             return;
         }
 
@@ -84,6 +110,33 @@ export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
                 type="password"
                 onChange={(e) => handlerChange('senha', e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100"/>
+            </div>
+            <div className="group flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">Perfil: </label>
+                <select
+                name="perfil"
+                value={usuario.perfil}
+                required
+                onChange={(e) => handlerChange('perfil', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100">
+                    <option value="ADMIN">Administrador (global)</option>
+                    <option value="GERENTE">Gerente</option>
+                    <option value="USER">Usuário</option>
+                </select>
+            </div>
+            <div className="group flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition group-focus-within:text-primary-600">Empresa: </label>
+                <select
+                name="empresa"
+                value={usuario.empresaId ?? ""}
+                required={usuario.perfil !== "ADMIN"}
+                onChange={(e) => handlerChange('empresaId', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100">
+                    <option value="">{usuario.perfil === "ADMIN" ? "Nenhuma (administrador global)" : "Selecione uma empresa..."}</option>
+                    {empresas.map((empresa) => (
+                        <option key={empresa.id} value={empresa.id ?? ""}>{empresa.razaoSocial}</option>
+                    ))}
+                </select>
             </div>
 
 

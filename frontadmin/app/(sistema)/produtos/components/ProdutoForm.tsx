@@ -36,7 +36,10 @@ export default function ProdutoForm({produtoExistente}:ProdutoFormProp){
             }
             alert("Produto foi salvo com sucesso!");
         } catch (error) {
-            alert("Erro ao salvar produto");
+            // o back responde 400 com a mensagem da validação (ex.: "Preco Invalido!") no corpo
+            const mensagemBack = (error as { response?: { data?: unknown } }).response?.data;
+
+            alert(typeof mensagemBack === "string" && mensagemBack ? mensagemBack : "Erro ao salvar produto");
             return;
         }
 

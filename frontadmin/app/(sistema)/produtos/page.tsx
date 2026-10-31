@@ -4,10 +4,22 @@ import { Produto } from "@/app/types/produto";
 import { buscarListaProdutos, deletarProduto } from "@/app/services/produtoService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/app/redux/store";
+import { definirBusca, definirStatus } from "@/app/redux/slices/produtoFiltroSlice";
 
 export default function Produtos() {
 
     const [produtos, setProdutos] = useState<Produto[]>([])
+
+    // enquanto a lista não chega do back, não faz sentido mostrar "Nenhum produto encontrado"
+    const [carregando, setCarregando] = useState(true)
+
+    // busca e filtro de status ficam na store do Redux (produtoFiltroSlice)
+    const busca = useSelector((state: RootState) => state.produtoFiltro.busca);
+    const filtroStatus = useSelector((state: RootState) => state.produtoFiltro.status);
+
+    const dispatch = useDispatch();
 
     useEffect(()=>{
         carregarDados();
@@ -21,16 +33,26 @@ export default function Produtos() {
             setProdutos(dados);
         } catch (error) {
             alert("Erro ao carregar dados")
+        } finally {
+            setCarregando(false)
         }
 
     }
 
     const handlerDeletarProduto = async(produto: Produto)=> {
+
+        if (!confirm(`Deseja realmente excluir o produto "${produto.nome}"?`)) {
+            return;
+        }
+
         try {
             await deletarProduto(produto.id || 0)
             alert("Produto foi excluído com sucesso!");
         } catch (error) {
-            alert("Erro ao excluir produto");
+            // no back só o ADMIN pode excluir produtos (DELETE em /produtos devolve 403 para os outros perfis)
+            const status = (error as { response?: { status?: number } }).response?.status;
+
+            alert(status === 403 ? "Você não tem permissão para excluir produtos!" : "Erro ao excluir produto");
             return;
         }
 
@@ -42,6 +64,24 @@ export default function Produtos() {
     // usa só "aaaa-mm-dd" para o fuso horário não recuar o dia (ex.: 00:00 UTC vira o dia anterior no Brasil)
     const formatarData = (data: string) => new Date(data.slice(0, 10) + "T00:00:00").toLocaleDateString("pt-BR");
 
+    // dias entre hoje e o vencimento (negativo quando já passou)
+    const diasParaVencer = (data: string) => {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const vencimento = new Date(data.slice(0, 10) + "T00:00:00");
+
+        return Math.round((vencimento.getTime() - hoje.getTime()) / 86400000);
+    };
+
+    const descreverVencimento = (data: string) => {
+        const dias = diasParaVencer(data);
+
+        if (dias === 0) return "Vence hoje";
+        if (dias > 0) return `Vence em ${dias} ${dias === 1 ? "dia" : "dias"}`;
+        return `Venceu há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}`;
+    };
+
     const statusLabels: Record<string, string> = {
         NA_VALIDADE: "Na validade",
         VENCIDO: "Vencido",
@@ -51,6 +91,28 @@ export default function Produtos() {
         NA_VALIDADE: "bg-emerald-100 text-emerald-700",
         VENCIDO: "bg-rose-100 text-rose-700",
     };
+
+    const statusBarras: Record<string, string> = {
+        NA_VALIDADE: "bg-gradient-to-r from-emerald-400 to-emerald-500",
+        VENCIDO: "bg-gradient-to-r from-rose-400 to-rose-500",
+    };
+
+    const produtosFiltrados = produtos.filter((produto) =>
+        produto.nome.toLowerCase().includes(busca.trim().toLowerCase())
+        && (filtroStatus === "TODOS" || produto.status === filtroStatus)
+    );
+
+    const resumo = [
+        { titulo: "Produtos", valor: produtos.length, estilo: "text-primary-700" },
+        { titulo: "Sem estoque", valor: produtos.filter((produto) => produto.quantidadeEstoque === 0).length, estilo: "text-accent-600" },
+        { titulo: "Vencidos", valor: produtos.filter((produto) => produto.status === "VENCIDO").length, estilo: "text-rose-600" },
+    ];
+
+    const filtros = [
+        { valor: "TODOS", nome: "Todos" },
+        { valor: "NA_VALIDADE", nome: "Na validade" },
+        { valor: "VENCIDO", nome: "Vencidos" },
+    ];
 
     return (
         <div className="w-full flex-1 bg-slate-50">
@@ -69,53 +131,96 @@ export default function Produtos() {
                 </Link>
             </div>
 
-            <div className="px-8 pb-10">
-                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-primary-50 text-xs font-semibold uppercase tracking-wide text-primary-700">
-                                <tr>
-                                    <th className="px-6 py-4">Produto</th>
-                                    <th className="px-6 py-4">Preço</th>
-                                    <th className="px-6 py-4">Estoque</th>
-                                    <th className="px-6 py-4">Vencimento</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {produtos.map((produto) => (
-                                    <tr key={produto.id} className="transition hover:bg-slate-50">
-                                        <td className="px-6 py-4 font-medium text-slate-800">{produto.nome}</td>
-                                        <td className="px-6 py-4 text-slate-600">{formatarMoeda(produto.preco)}</td>
-                                        <td className="px-6 py-4 text-slate-600">{produto.quantidadeEstoque} un.</td>
-                                        <td className="px-6 py-4 text-slate-600">{formatarData(produto.vencimento)}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[produto.status]}`}>
-                                                {statusLabels[produto.status]}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-4">
-                                                <Link href={`/produtos/${produto.id}/editar`} className="font-semibold text-primary-600 hover:text-primary-700">Editar</Link>
-                                                <button onClick={() => handlerDeletarProduto(produto)} className="font-semibold text-rose-500 hover:text-rose-600">Excluir</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-
-                                {
-                                    produtos.length === 0 &&(
-                                        <tr>
-                                            <td colSpan={6} className="px-6 py-12 text-center">
-                                                Nenhum produto encontrado
-                                            </td>
-                                        </tr>
-                                    )
-                                }
-                            </tbody>
-                        </table>
+            <div className="grid grid-cols-1 gap-4 px-8 pb-6 sm:grid-cols-3">
+                {resumo.map((item) => (
+                    <div key={item.titulo} className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.titulo}</p>
+                        <p className={`mt-1 text-3xl font-extrabold ${item.estilo}`}>{item.valor}</p>
                     </div>
+                ))}
+            </div>
+
+            <div className="flex flex-col gap-4 px-8 pb-6 md:flex-row md:items-center md:justify-between">
+                <input
+                    value={busca}
+                    onChange={(e) => dispatch(definirBusca(e.target.value))}
+                    placeholder="Buscar produto pelo nome..."
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 md:max-w-md"
+                />
+
+                <div className="flex gap-2">
+                    {filtros.map((filtro) => (
+                        <button
+                            key={filtro.valor}
+                            onClick={() => dispatch(definirStatus(filtro.valor))}
+                            className={`rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-[0.98] ${
+                                filtroStatus === filtro.valor
+                                ? "border-primary-600 bg-primary-600 text-white shadow-md shadow-primary-500/30"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"}`}
+                        >
+                            {filtro.nome}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="px-8 pb-10">
+                {carregando && (
+                    <div className="rounded-3xl border border-slate-200 bg-white px-6 py-12 text-center text-slate-500 shadow-sm">
+                        Carregando produtos...
+                    </div>
+                )}
+
+                {!carregando && produtosFiltrados.length === 0 && (
+                    <div className="rounded-3xl border border-slate-200 bg-white px-6 py-12 text-center text-slate-500 shadow-sm">
+                        Nenhum produto encontrado
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {produtosFiltrados.map((produto) => (
+                        <div key={produto.id} className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-xl">
+                            <div className={`h-1.5 w-full ${statusBarras[produto.status]}`}></div>
+
+                            <div className="flex flex-1 flex-col gap-5 p-6">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 text-lg font-bold text-white shadow-md shadow-primary-500/30">
+                                            {produto.nome.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h2 className="truncate text-base font-bold text-slate-800">{produto.nome}</h2>
+                                            <p className="text-xs text-slate-400">Cód. {produto.id}</p>
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[produto.status]}`}>
+                                        {statusLabels[produto.status]}
+                                    </span>
+                                </div>
+
+                                <p className="text-3xl font-extrabold tracking-tight text-primary-700">{formatarMoeda(produto.preco)}</p>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Estoque</p>
+                                        <p className={`mt-1 text-sm font-bold ${produto.quantidadeEstoque === 0 ? "text-accent-600" : "text-slate-800"}`}>
+                                            {produto.quantidadeEstoque === 0 ? "Sem estoque" : `${produto.quantidadeEstoque} un.`}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Vencimento</p>
+                                        <p className="mt-1 text-sm font-bold text-slate-800">{formatarData(produto.vencimento)}</p>
+                                        <p className={`text-xs ${diasParaVencer(produto.vencimento) < 0 ? "text-rose-500" : "text-slate-400"}`}>{descreverVencimento(produto.vencimento)}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-3">
+                                <Link href={`/produtos/${produto.id}/editar`} className="rounded-full px-4 py-1.5 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 hover:text-primary-700">Editar</Link>
+                                <button onClick={() => handlerDeletarProduto(produto)} className="rounded-full px-4 py-1.5 text-sm font-semibold text-rose-500 transition hover:bg-rose-50 hover:text-rose-600">Excluir</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

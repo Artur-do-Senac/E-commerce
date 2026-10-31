@@ -6,7 +6,7 @@ export type EmpresaRequest = Empresa & { categoriaId: number | null };
 
 export async function buscarListaEmpresas() : Promise<Empresa[]> {
 
-    const dados = await api.get<Empresa[]>('http://localhost:8080/empresas');
+    const dados = await api.get<Empresa[]>('/empresas');
 
     if(dados.status == 200){
         return dados.data;
@@ -18,23 +18,23 @@ export async function buscarListaEmpresas() : Promise<Empresa[]> {
 
 export async function deletarEmpresa (id:number) : Promise<number> {
 
-    const dados = await api.delete('http://localhost:8080/empresas/'+id+'/excluir');
+    const dados = await api.delete('/empresas/'+id+'/excluir');
     return dados.status;
 }
 
 export async function consultaEmpresaPorId(id:number) : Promise<Empresa>{
-    const valorEmpresaBack = await api.get<Empresa>('http://localhost:8080/empresas/'+id);
+    const valorEmpresaBack = await api.get<Empresa>('/empresas/'+id);
 
     return valorEmpresaBack.data
 
 }
 
 export async function atualizarEmpresa(empresa:EmpresaRequest) : Promise<number>{
-    const dadosRetorno = await api.put<number>('http://localhost:8080/empresas/'+empresa.id, empresa);
+    const dadosRetorno = await api.put<number>('/empresas/'+empresa.id, empresa);
     return dadosRetorno.data;
 }
 
 export async function salvarEmpresa(empresa:EmpresaRequest) : Promise<number>{
-    const dadosRetorno = await api.post<number>('http://localhost:8080/empresas', empresa);
+    const dadosRetorno = await api.post<number>('/empresas', empresa);
     return dadosRetorno.data;
 }

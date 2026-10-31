@@ -69,6 +69,8 @@ export default function Usuarios() {
                                     <th className="px-6 py-4">Nome</th>
                                     <th className="px-6 py-4">CPF</th>
                                     <th className="px-6 py-4">Email</th>
+                                    <th className="px-6 py-4">Perfil</th>
+                                    <th className="px-6 py-4">Empresa</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4 text-right">Ações</th>
                                 </tr>
@@ -80,6 +82,8 @@ export default function Usuarios() {
                                         <td className="px-6 py-4 font-medium text-slate-800">{usuario.nome}</td>
                                         <td className="px-6 py-4 text-slate-600">{usuario.cpf}</td>
                                         <td className="px-6 py-4 text-slate-600">{usuario.email}</td>
+                                        <td className="px-6 py-4 text-slate-600">{usuario.perfil}</td>
+                                        <td className="px-6 py-4 text-slate-600">{usuario.empresaNome ?? "—"}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                                                 usuario.status === 'ATIVO' ? 'bg-green-100 text-green-700'
@@ -106,7 +110,7 @@ export default function Usuarios() {
                                     {
                                         usuarios.length === 0 &&(
                                             <tr>
-                                                <td colSpan={6}className="px-6 py-12 text-center">
+                                                <td colSpan={8}className="px-6 py-12 text-center">
                                                     Nenhum usuário encontrado
                                                 </td>
                                             </tr>

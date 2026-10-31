@@ -1,11 +1,9 @@
 'use client'
 
 import { useRouter } from "next/navigation"
-import axios from "axios";
 import { LoginResponse } from "../types/auth";
-import Cookies from "js-cookie";
 import { useDispatch } from "react-redux"
-import { login } from "../redux/slices/authSlice";
+import { login, logout } from "../redux/slices/authSlice";
 import { buscarUsuarioLogado } from "../services/usuarioService";
 import { loginBack } from "../services/authService";
 
@@ -26,7 +24,11 @@ export default function Login(){
     
             if (loginResposta != null){
 
-                Cookies.set('token', loginResposta.token, {secure: true, expires: 7})
+                // o interceptor lê o token da store, então ele entra nela antes de buscar o usuário logado
+                dispatch(login({
+                    token: loginResposta.token,
+                    usuario: null
+                }));
 
                 var usuarioLogado = await buscarUsuarioLogado();
 
@@ -41,6 +43,8 @@ export default function Login(){
                 alert("Usuário e/ou senha inválidos!")
             }
         }catch(e){
+            // se falhou depois de o token entrar na store (ex.: buscar o usuário logado), não deixa o token sobrando
+            dispatch(logout());
             alert("Usuário e/ou senha inválidos!")
 
         }      
