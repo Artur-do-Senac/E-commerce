@@ -41,12 +41,12 @@ public class UsuarioService {
     }
 
     // Retorna os usuários da empresa de quem está logado, menos os excluídos (exclusão lógica: status EXCLUIDO)
-    // Quem não pertence a nenhuma empresa (ex.: o ADMIN) enxerga os usuários de todas
+    // O ADMIN (global) e quem não pertence a nenhuma empresa enxergam os usuários de todas
     public List<UsuarioResponse> listarTodos() {
 
         var usuarioLogado = getUsuarioLogado();
 
-        List<Usuario> usuarios = usuarioLogado.empresa_id() == null
+        List<Usuario> usuarios = usuarioLogado.admin() || usuarioLogado.empresa_id() == null
                 ? usuarioRepository.findByStatusNot(EnumStatusUsuario.EXCLUIDO).orElse(List.of())
                 : usuarioRepository.getUsuariosByEmpresa_id(usuarioLogado.empresa_id());
 
