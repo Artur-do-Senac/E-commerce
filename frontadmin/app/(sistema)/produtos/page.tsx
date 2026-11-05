@@ -1,12 +1,14 @@
 'use client'
 
 import { Produto } from "@/app/types/produto";
+import { Empresa } from "@/app/types/empresa";
+import { buscarListaEmpresas } from "@/app/services/empresaService";
 import { buscarListaProdutos, deletarProduto } from "@/app/services/produtoService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/redux/store";
-import { definirBusca, definirStatus } from "@/app/redux/slices/produtoFiltroSlice";
+import { definirBusca, definirEmpresa, definirStatus } from "@/app/redux/slices/produtoFiltroSlice";
 
 export default function Produtos() {
 
@@ -19,11 +21,39 @@ export default function Produtos() {
     const busca = useSelector((state: RootState) => state.produtoFiltro.busca);
     const filtroStatus = useSelector((state: RootState) => state.produtoFiltro.status);
 
+    const filtroEmpresa = useSelector((state: RootState) => state.produtoFiltro.empresa);
+
+    // só o ADMIN (que vê tudo de todas as empresas) tem o filtro por empresa
+    const ehAdmin = useSelector((state: RootState) => state.auth.usuario?.perfil === "ADMIN");
+
+    const [empresas, setEmpresas] = useState<Empresa[]>([])
+
     const dispatch = useDispatch();
 
     useEffect(()=>{
         carregarDados();
     },[]);
+
+    useEffect(()=>{
+
+        if (!ehAdmin) {
+            return;
+        }
+
+        const carregarEmpresas = async ()=>{
+
+            try {
+                const dados = await buscarListaEmpresas();
+
+                setEmpresas(dados);
+            } catch (error) {
+                alert("Erro ao carregar empresas")
+            }
+
+        }
+
+        carregarEmpresas();
+    },[ehAdmin]);
 
     const carregarDados = async ()=>{
 
@@ -97,15 +127,22 @@ export default function Produtos() {
         VENCIDO: "bg-gradient-to-r from-rose-400 to-rose-500",
     };
 
-    const produtosFiltrados = produtos.filter((produto) =>
+    // o ADMIN enxerga os produtos de todas as empresas e pode filtrar por uma delas ("SEM_EMPRESA" = produtos sem empresa)
+    const produtosDaEmpresa = produtos.filter((produto) =>
+        !ehAdmin
+        || filtroEmpresa === "TODAS"
+        || (filtroEmpresa === "SEM_EMPRESA" ? !produto.empresaId : produto.empresaId === Number(filtroEmpresa))
+    );
+
+    const produtosFiltrados = produtosDaEmpresa.filter((produto) =>
         produto.nome.toLowerCase().includes(busca.trim().toLowerCase())
         && (filtroStatus === "TODOS" || produto.status === filtroStatus)
     );
 
     const resumo = [
-        { titulo: "Produtos", valor: produtos.length, estilo: "text-primary-700" },
-        { titulo: "Sem estoque", valor: produtos.filter((produto) => produto.quantidadeEstoque === 0).length, estilo: "text-accent-600" },
-        { titulo: "Vencidos", valor: produtos.filter((produto) => produto.status === "VENCIDO").length, estilo: "text-rose-600" },
+        { titulo: "Produtos", valor: produtosDaEmpresa.length, estilo: "text-primary-700" },
+        { titulo: "Sem estoque", valor: produtosDaEmpresa.filter((produto) => produto.quantidadeEstoque === 0).length, estilo: "text-accent-600" },
+        { titulo: "Vencidos", valor: produtosDaEmpresa.filter((produto) => produto.status === "VENCIDO").length, estilo: "text-rose-600" },
     ];
 
     const filtros = [
@@ -148,7 +185,20 @@ export default function Produtos() {
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 md:max-w-md"
                 />
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                    {ehAdmin && (
+                        <select
+                            value={filtroEmpresa}
+                            onChange={(e) => dispatch(definirEmpresa(e.target.value))}
+                            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100"
+                        >
+                            <option value="TODAS">Todas as empresas</option>
+                            {empresas.map((empresa) => (
+                                <option key={empresa.id} value={empresa.id ?? ""}>{empresa.razaoSocial}</option>
+                            ))}
+                            <option value="SEM_EMPRESA">Sem empresa</option>
+                        </select>
+                    )}
                     {filtros.map((filtro) => (
                         <button
                             key={filtro.valor}
@@ -190,7 +240,7 @@ export default function Produtos() {
                                         </div>
                                         <div className="min-w-0">
                                             <h2 className="truncate text-sm font-bold text-slate-800">{produto.nome}</h2>
-                                            <p className="text-xs text-slate-400">Cód. {produto.id}</p>
+                                            <p className="truncate text-xs text-slate-400">Cód. {produto.id}{ehAdmin && ` · ${produto.empresaNome ?? "Sem empresa"}`}</p>
                                         </div>
                                     </div>
                                     <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[produto.status]}`}>

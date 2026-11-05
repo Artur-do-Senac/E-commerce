@@ -4,7 +4,7 @@ import com.example.ecommerceb2b.domain.entities.Produto;
 
 import java.util.Date;
 
-public record ProdutoResponse(Long id, String nome, Double preco, Date vencimento, Integer quantidadeEstoque, EnumStatusProduto status) {
+public record ProdutoResponse(Long id, String nome, Double preco, Date vencimento, Integer quantidadeEstoque, EnumStatusProduto status, Long empresaId, String empresaNome) {
 
     public ProdutoResponse(Produto produtoEntidade) {
 
@@ -14,7 +14,9 @@ public record ProdutoResponse(Long id, String nome, Double preco, Date venciment
         produtoEntidade.getPreco(),
         produtoEntidade.getVencimento(),
         produtoEntidade.getQuantidadeEstoque(),
-        produtoEntidade.getStatus()
+        produtoEntidade.getStatus(),
+        produtoEntidade.getEmpresa() == null ? null : produtoEntidade.getEmpresa().getId(),
+        produtoEntidade.getEmpresa() == null ? null : produtoEntidade.getEmpresa().getRazaoSocial()
         );
     }
 }
