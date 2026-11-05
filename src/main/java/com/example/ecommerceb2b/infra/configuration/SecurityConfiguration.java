@@ -47,7 +47,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
 
                         // Públicas: não precisam de token
+                        // /error: o Spring redireciona para lá ao devolver um erro (ex.: 403). Se ela exigisse login, o 403 de quem não tem a role viraria 401
                         .requestMatchers("/auth/login",
+                                "/error",
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/swagger-resources/**",

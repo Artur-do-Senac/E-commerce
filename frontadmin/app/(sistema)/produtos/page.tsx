@@ -131,11 +131,11 @@ export default function Produtos() {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 px-8 pb-6 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 px-8 pb-5 sm:grid-cols-3">
                 {resumo.map((item) => (
-                    <div key={item.titulo} className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                    <div key={item.titulo} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.titulo}</p>
-                        <p className={`mt-1 text-3xl font-extrabold ${item.estilo}`}>{item.valor}</p>
+                        <p className={`text-2xl font-extrabold ${item.estilo}`}>{item.valor}</p>
                     </div>
                 ))}
             </div>
@@ -177,47 +177,47 @@ export default function Produtos() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     {produtosFiltrados.map((produto) => (
-                        <div key={produto.id} className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-xl">
+                        <div key={produto.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-xl">
                             <div className={`h-1.5 w-full ${statusBarras[produto.status]}`}></div>
 
-                            <div className="flex flex-1 flex-col gap-5 p-6">
+                            <div className="flex flex-1 flex-col gap-3 p-4">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex min-w-0 items-center gap-3">
-                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 text-lg font-bold text-white shadow-md shadow-primary-500/30">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-sm font-bold text-white shadow-md shadow-primary-500/30">
                                             {produto.nome.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0">
-                                            <h2 className="truncate text-base font-bold text-slate-800">{produto.nome}</h2>
+                                            <h2 className="truncate text-sm font-bold text-slate-800">{produto.nome}</h2>
                                             <p className="text-xs text-slate-400">Cód. {produto.id}</p>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[produto.status]}`}>
+                                    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[produto.status]}`}>
                                         {statusLabels[produto.status]}
                                     </span>
                                 </div>
 
-                                <p className="text-3xl font-extrabold tracking-tight text-primary-700">{formatarMoeda(produto.preco)}</p>
+                                <p className="text-xl font-extrabold tracking-tight text-primary-700">{formatarMoeda(produto.preco)}</p>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="rounded-xl bg-slate-50 px-3 py-2">
                                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Estoque</p>
-                                        <p className={`mt-1 text-sm font-bold ${produto.quantidadeEstoque === 0 ? "text-accent-600" : "text-slate-800"}`}>
+                                        <p className={`mt-0.5 text-xs font-bold ${produto.quantidadeEstoque === 0 ? "text-accent-600" : "text-slate-800"}`}>
                                             {produto.quantidadeEstoque === 0 ? "Sem estoque" : `${produto.quantidadeEstoque} un.`}
                                         </p>
                                     </div>
-                                    <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                                    <div className="rounded-xl bg-slate-50 px-3 py-2">
                                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Vencimento</p>
-                                        <p className="mt-1 text-sm font-bold text-slate-800">{formatarData(produto.vencimento)}</p>
+                                        <p className="mt-0.5 text-xs font-bold text-slate-800">{formatarData(produto.vencimento)}</p>
                                         <p className={`text-xs ${diasParaVencer(produto.vencimento) < 0 ? "text-rose-500" : "text-slate-400"}`}>{descreverVencimento(produto.vencimento)}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-3">
-                                <Link href={`/produtos/${produto.id}/editar`} className="rounded-full px-4 py-1.5 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 hover:text-primary-700">Editar</Link>
-                                <button onClick={() => handlerDeletarProduto(produto)} className="rounded-full px-4 py-1.5 text-sm font-semibold text-rose-500 transition hover:bg-rose-50 hover:text-rose-600">Excluir</button>
+                            <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2">
+                                <Link href={`/produtos/${produto.id}/editar`} className="rounded-full px-3 py-1 text-xs font-semibold text-primary-600 transition hover:bg-primary-50 hover:text-primary-700">Editar</Link>
+                                <button onClick={() => handlerDeletarProduto(produto)} className="rounded-full px-3 py-1 text-xs font-semibold text-rose-500 transition hover:bg-rose-50 hover:text-rose-600">Excluir</button>
                             </div>
                         </div>
                     ))}
