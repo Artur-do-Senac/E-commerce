@@ -70,7 +70,7 @@ public class UsuarioController {
 
                 stage.setScene(scene);
             }else {
-                showMessage(Alert.AlertType.ERROR, mensagemErro.isBlank() ? "Erro ao salvar usuário!" : "Erro ao salvar usuário: " + mensagemErro);
+                showMessage(Alert.AlertType.ERROR, mensagemErro.trim().isEmpty() ? "Erro ao salvar usuário!" : "Erro ao salvar usuário: " + mensagemErro);
             }
         } else {
             showMessage(Alert.AlertType.ERROR, "Erro ao salvar usuário!");
