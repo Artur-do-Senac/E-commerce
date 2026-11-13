@@ -1,13 +1,19 @@
+'use client'
+
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/redux/store";
 import Link from "next/link";
 
 export default function Home(){
 
+    const perfil = useSelector((state:RootState) => state.auth.usuario?.perfil);
+
     const modulos = [
-        { nome: "Usuários", href: "/usuarios", descricao: "Gerencie os usuários do sistema" },
-        { nome: "Empresas", href: "/empresas", descricao: "Gerencie as empresas cadastradas" },
-        { nome: "Categorias", href: "/categorias", descricao: "Gerencie as categorias (ramos) das empresas" },
-        { nome: "Produtos", href: "/produtos", descricao: "Gerencie o catálogo de produtos" },
-        { nome: "Pedidos", href: "/pedidos", descricao: "Acompanhe os pedidos realizados" },
+        { nome: "Usuários", href: "/usuarios", descricao: "Gerencie os usuários do sistema", perfis: ["ADMIN"] },
+        { nome: "Empresas", href: "/empresas", descricao: "Gerencie as empresas cadastradas", perfis: ["ADMIN", "GERENTE"] },
+        { nome: "Categorias", href: "/categorias", descricao: "Gerencie as categorias (ramos) das empresas", perfis: ["ADMIN", "GERENTE"] },
+        { nome: "Produtos", href: "/produtos", descricao: "Gerencie o catálogo de produtos", perfis: ["ADMIN", "GERENTE", "USER"] },
+        { nome: "Pedidos", href: "/pedidos", descricao: "Acompanhe os pedidos realizados", perfis: ["ADMIN", "GERENTE"] },
     ];
 
     return (<>
@@ -15,7 +21,7 @@ export default function Home(){
             <h1 className="bg-gradient-to-r from-primary-900 to-primary-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl"> Bem vindo ao MarketHub!</h1>
 
             <div className="grid w-full max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {modulos.map((modulo) => (
+                {modulos.filter((modulo) => perfil && modulo.perfis.includes(perfil)).map((modulo) => (
                     <Link
                         key={modulo.href}
                         href={modulo.href}

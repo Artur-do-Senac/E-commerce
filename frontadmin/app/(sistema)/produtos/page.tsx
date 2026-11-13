@@ -1,14 +1,13 @@
 'use client'
 
 import { Produto } from "@/app/types/produto";
-import { Empresa } from "@/app/types/empresa";
-import { buscarListaEmpresas } from "@/app/services/empresaService";
 import { buscarListaProdutos, deletarProduto } from "@/app/services/produtoService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/redux/store";
 import { definirBusca, definirEmpresa, definirStatus } from "@/app/redux/slices/produtoFiltroSlice";
+import { adicionar } from "@/app/redux/slices/carrinhoSlice";
 
 export default function Produtos() {
 
@@ -23,37 +22,19 @@ export default function Produtos() {
 
     const filtroEmpresa = useSelector((state: RootState) => state.produtoFiltro.empresa);
 
-    // só o ADMIN (que vê tudo de todas as empresas) tem o filtro por empresa
+    // o ADMIN e o cliente (USER) enxergam os produtos de todas as empresas, então os dois têm o filtro por empresa
     const ehAdmin = useSelector((state: RootState) => state.auth.usuario?.perfil === "ADMIN");
+    const ehCliente = useSelector((state: RootState) => state.auth.usuario?.perfil === "USER");
+    const veTodasEmpresas = ehAdmin || ehCliente;
 
-    const [empresas, setEmpresas] = useState<Empresa[]>([])
+    // o cliente só consegue finalizar pedido depois de completar o cadastro com o endereço
+    const temEndereco = useSelector((state: RootState) => !!state.auth.usuario?.endereco);
 
     const dispatch = useDispatch();
 
     useEffect(()=>{
         carregarDados();
     },[]);
-
-    useEffect(()=>{
-
-        if (!ehAdmin) {
-            return;
-        }
-
-        const carregarEmpresas = async ()=>{
-
-            try {
-                const dados = await buscarListaEmpresas();
-
-                setEmpresas(dados);
-            } catch (error) {
-                alert("Erro ao carregar empresas")
-            }
-
-        }
-
-        carregarEmpresas();
-    },[ehAdmin]);
 
     const carregarDados = async ()=>{
 
@@ -87,6 +68,25 @@ export default function Produtos() {
         }
 
         carregarDados();
+    }
+
+    // carrinho do cliente (carrinhoSlice): quantas unidades de cada produto já estão nele
+    const carrinho = useSelector((state: RootState) => state.carrinho.itens);
+
+    const quantidadeNoCarrinho = (produto: Produto) => carrinho.find((item) => item.produtoId === produto.id)?.quantidade ?? 0;
+
+    // só dá para comprar produto com estoque, dentro da validade e sem passar do estoque
+    const podeComprar = (produto: Produto) => produto.quantidadeEstoque > 0 && produto.status !== "VENCIDO" && quantidadeNoCarrinho(produto) < produto.quantidadeEstoque;
+
+    const handlerAdicionarAoCarrinho = (produto: Produto) => {
+        dispatch(adicionar({
+            produtoId: produto.id || 0,
+            nome: produto.nome,
+            preco: produto.preco,
+            empresaId: produto.empresaId ?? null,
+            empresaNome: produto.empresaNome ?? null,
+            estoque: produto.quantidadeEstoque
+        }));
     }
 
     const formatarMoeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -127,9 +127,14 @@ export default function Produtos() {
         VENCIDO: "bg-gradient-to-r from-rose-400 to-rose-500",
     };
 
-    // o ADMIN enxerga os produtos de todas as empresas e pode filtrar por uma delas ("SEM_EMPRESA" = produtos sem empresa)
+    // as empresas do filtro saem dos próprios produtos que chegaram do back (o cliente não tem acesso à lista de empresas)
+    const empresas = Array.from(
+        new Map(produtos.filter((produto) => produto.empresaId).map((produto) => [produto.empresaId as number, produto.empresaNome ?? ""])).entries()
+    ).sort((a, b) => a[1].localeCompare(b[1]));
+
+    // quem vê todas as empresas pode filtrar por uma delas ("SEM_EMPRESA" = produtos sem empresa)
     const produtosDaEmpresa = produtos.filter((produto) =>
-        !ehAdmin
+        !veTodasEmpresas
         || filtroEmpresa === "TODAS"
         || (filtroEmpresa === "SEM_EMPRESA" ? !produto.empresaId : produto.empresaId === Number(filtroEmpresa))
     );
@@ -156,17 +161,26 @@ export default function Produtos() {
             <div className="flex flex-col gap-4 px-8 pt-10 pb-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="bg-gradient-to-r from-primary-900 to-primary-600 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
-                        Gestão de Produtos
+                        {ehCliente ? "Catálogo de Produtos" : "Gestão de Produtos"}
                     </h1>
-                    <p className="mt-1 text-sm text-slate-500">Gerencie o catálogo de produtos do sistema</p>
+                    <p className="mt-1 text-sm text-slate-500">{ehCliente ? "Escolha os produtos das empresas e adicione ao carrinho" : "Gerencie o catálogo de produtos do sistema"}</p>
                 </div>
-                <Link
-                    href="/produtos/novo"
-                    className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-accent-500 to-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:shadow-xl hover:shadow-accent-500/40 hover:brightness-110 active:scale-[0.98]"
-                >
-                    + Novo Produto
-                </Link>
+                {!ehCliente && (
+                    <Link
+                        href="/produtos/novo"
+                        className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-accent-500 to-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:shadow-xl hover:shadow-accent-500/40 hover:brightness-110 active:scale-[0.98]"
+                    >
+                        + Novo Produto
+                    </Link>
+                )}
             </div>
+
+            {ehCliente && !temEndereco && (
+                <div className="mx-8 mb-5 flex flex-col gap-3 rounded-2xl border border-accent-200 bg-accent-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-medium text-accent-600">Para finalizar pedidos, complete seu cadastro com o endereço de entrega.</p>
+                    <Link href="/perfil" className="inline-flex w-fit items-center rounded-full bg-accent-500 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-accent-500/30 transition hover:bg-accent-600 active:scale-[0.98]">Completar cadastro</Link>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-3 px-8 pb-5 sm:grid-cols-3">
                 {resumo.map((item) => (
@@ -186,17 +200,17 @@ export default function Produtos() {
                 />
 
                 <div className="flex flex-wrap gap-2">
-                    {ehAdmin && (
+                    {veTodasEmpresas && (
                         <select
                             value={filtroEmpresa}
                             onChange={(e) => dispatch(definirEmpresa(e.target.value))}
                             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100"
                         >
                             <option value="TODAS">Todas as empresas</option>
-                            {empresas.map((empresa) => (
-                                <option key={empresa.id} value={empresa.id ?? ""}>{empresa.razaoSocial}</option>
+                            {empresas.map(([empresaId, empresaNome]) => (
+                                <option key={empresaId} value={empresaId}>{empresaNome}</option>
                             ))}
-                            <option value="SEM_EMPRESA">Sem empresa</option>
+                            {ehAdmin && <option value="SEM_EMPRESA">Sem empresa</option>}
                         </select>
                     )}
                     {filtros.map((filtro) => (
@@ -240,7 +254,7 @@ export default function Produtos() {
                                         </div>
                                         <div className="min-w-0">
                                             <h2 className="truncate text-sm font-bold text-slate-800">{produto.nome}</h2>
-                                            <p className="truncate text-xs text-slate-400">Cód. {produto.id}{ehAdmin && ` · ${produto.empresaNome ?? "Sem empresa"}`}</p>
+                                            <p className="truncate text-xs text-slate-400">Cód. {produto.id}{veTodasEmpresas && ` · ${produto.empresaNome ?? "Sem empresa"}`}</p>
                                         </div>
                                     </div>
                                     <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[produto.status]}`}>
@@ -265,10 +279,25 @@ export default function Produtos() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2">
-                                <Link href={`/produtos/${produto.id}/editar`} className="rounded-full px-3 py-1 text-xs font-semibold text-primary-600 transition hover:bg-primary-50 hover:text-primary-700">Editar</Link>
-                                <button onClick={() => handlerDeletarProduto(produto)} className="rounded-full px-3 py-1 text-xs font-semibold text-rose-500 transition hover:bg-rose-50 hover:text-rose-600">Excluir</button>
-                            </div>
+                            {ehCliente ? (
+                                <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2">
+                                    <span className="text-xs font-semibold text-primary-600">
+                                        {quantidadeNoCarrinho(produto) > 0 && `No carrinho: ${quantidadeNoCarrinho(produto)}`}
+                                    </span>
+                                    <button
+                                        onClick={() => handlerAdicionarAoCarrinho(produto)}
+                                        disabled={!podeComprar(produto)}
+                                        className="rounded-full bg-gradient-to-r from-accent-500 to-accent-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-accent-500/30 transition hover:shadow-lg hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                                    >
+                                        {produto.quantidadeEstoque === 0 ? "Indisponível" : produto.status === "VENCIDO" ? "Vencido" : "Adicionar ao carrinho"}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2">
+                                    <Link href={`/produtos/${produto.id}/editar`} className="rounded-full px-3 py-1 text-xs font-semibold text-primary-600 transition hover:bg-primary-50 hover:text-primary-700">Editar</Link>
+                                    <button onClick={() => handlerDeletarProduto(produto)} className="rounded-full px-3 py-1 text-xs font-semibold text-rose-500 transition hover:bg-rose-50 hover:text-rose-600">Excluir</button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -1,14 +1,22 @@
+'use client'
+
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 export default function Sidebar(){
 
+    const perfil = useSelector((state:RootState) => state.auth.usuario?.perfil);
+
+    // cada perfil só vê no menu o que o back deixa ele acessar
     const links = [
-        { nome: "Home", href: "/home" },
-        { nome: "Usuários", href: "/usuarios" },
-        { nome: "Empresas", href: "/empresas" },
-        { nome: "Categorias", href: "/categorias" },
-        { nome: "Produtos", href: "/produtos" },
-        { nome: "Pedidos", href: "/pedidos" },
+        { nome: "Home", href: "/home", perfis: ["ADMIN", "GERENTE", "USER"] },
+        { nome: "Usuários", href: "/usuarios", perfis: ["ADMIN"] },
+        { nome: "Empresas", href: "/empresas", perfis: ["ADMIN", "GERENTE"] },
+        { nome: "Categorias", href: "/categorias", perfis: ["ADMIN", "GERENTE"] },
+        { nome: "Produtos", href: "/produtos", perfis: ["ADMIN", "GERENTE", "USER"] },
+        { nome: "Pedidos", href: "/pedidos", perfis: ["ADMIN", "GERENTE"] },
+        { nome: "Meu cadastro", href: "/perfil", perfis: ["USER"] },
     ];
 
 
@@ -21,7 +29,7 @@ export default function Sidebar(){
             </Link>
 
             <nav className="flex flex-col gap-1">
-                {links.map((link) => (
+                {links.filter((link) => perfil && link.perfis.includes(perfil)).map((link) => (
                     <Link
                         key={link.href}
                         href={link.href}

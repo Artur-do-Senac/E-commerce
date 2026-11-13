@@ -129,10 +129,10 @@ export default function UsuarioForm({usuarioExistente}:UsuarioFormProp){
                 <select
                 name="empresa"
                 value={usuario.empresaId ?? ""}
-                required={usuario.perfil !== "ADMIN"}
+                required={usuario.perfil === "GERENTE"}
                 onChange={(e) => handlerChange('empresaId', e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100">
-                    <option value="">{usuario.perfil === "ADMIN" ? "Nenhuma (administrador global)" : "Selecione uma empresa..."}</option>
+                    <option value="">{usuario.perfil === "GERENTE" ? "Selecione uma empresa..." : "Nenhuma (sem empresa)"}</option>
                     {empresas.map((empresa) => (
                         <option key={empresa.id} value={empresa.id ?? ""}>{empresa.razaoSocial}</option>
                     ))}

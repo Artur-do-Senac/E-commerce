@@ -1,5 +1,6 @@
 'use client'
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { LoginResponse } from "../types/auth";
 import { useDispatch } from "react-redux"
@@ -73,6 +74,11 @@ export default function Login(){
                 </div>
                 <button type="submit" className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-accent-500 to-accent-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/40 transition hover:shadow-xl hover:shadow-accent-500/50 hover:brightness-110 active:scale-[0.98]">Entrar</button>
             </form>
+
+            <p className="mt-6 text-center text-sm text-slate-500">
+                Ainda não tem conta?{" "}
+                <Link href="/cadastro" className="font-semibold text-accent-600 transition hover:text-accent-500">Criar conta grátis</Link>
+            </p>
 
         </div>  
     </div>

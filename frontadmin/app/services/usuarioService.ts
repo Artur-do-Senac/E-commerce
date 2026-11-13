@@ -1,4 +1,4 @@
-import { Usuario } from "../types/usuario";
+import { EnderecoUsuario, Usuario } from "../types/usuario";
 import api from "./api";
 
 export async function buscarListaUsuarios() : Promise<Usuario[]> {
@@ -54,4 +54,10 @@ export async function salvarUsuario(usuario:Usuario) : Promise<number>{
 export async function buscarUsuarioLogado() : Promise<Usuario>{
 
     return (await api.get<Usuario>('/usuarios/buscarusuariologado')).data;
+}
+
+// o usuário logado completa o cadastro com o endereço de entrega (necessário para fazer pedidos)
+export async function atualizarEnderecoUsuarioLogado(endereco:EnderecoUsuario) : Promise<Usuario>{
+
+    return (await api.put<Usuario>('/usuarios/meu-endereco', endereco)).data;
 }

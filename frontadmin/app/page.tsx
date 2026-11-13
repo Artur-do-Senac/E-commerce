@@ -136,12 +136,12 @@ export default function Home() {
             >
               Entrar
             </Link>
-            <button
-              type="button"
+            <Link
+              href="/cadastro"
               className="inline-flex items-center justify-center rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-accent-500/30 transition hover:bg-accent-600"
             >
               Criar conta grátis
-            </button>
+            </Link>
           </div>
 
           <button
@@ -177,12 +177,12 @@ export default function Home() {
               >
                 Entrar
               </Link>
-              <button
-                type="button"
+              <Link
+                href="/cadastro"
                 className="inline-flex items-center justify-center rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white"
               >
                 Criar conta grátis
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -203,12 +203,12 @@ export default function Home() {
                 Tudo o que o seu negócio B2B precisa, em uma única plataforma.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
+                <Link
+                  href="/cadastro"
                   className="inline-flex items-center justify-center rounded-full bg-accent-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-600"
                 >
                   Começar agora
-                </button>
+                </Link>
                 <a
                   href="#como-funciona"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 px-7 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-primary-400 hover:text-primary-700"
@@ -380,12 +380,12 @@ export default function Home() {
               Crie sua conta gratuitamente e comece a receber pedidos sem sair do controle do seu estoque.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
+              <Link
+                href="/cadastro"
                 className="inline-flex items-center justify-center rounded-full bg-accent-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-600"
               >
                 Criar conta grátis
-              </button>
+              </Link>
               <Link
                 href="/login"
                 className="inline-flex items-center justify-center rounded-full border border-primary-700 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-900"

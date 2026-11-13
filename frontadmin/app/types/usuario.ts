@@ -1,3 +1,22 @@
+export interface EnderecoUsuario {
+    cep:string
+    logradouro:string
+    numero:string
+    complemento:string | null
+    bairro:string
+    cidade:string
+    uf:string
+}
+
+// o que a consulta de CEP (ViaCEP, pelo back) devolve
+export interface EnderecoCep {
+    cep:string
+    logradouro:string
+    bairro:string
+    cidade:string
+    uf:string
+}
+
 export class Usuario {
 
     constructor(
@@ -9,7 +28,8 @@ export class Usuario {
         public senha:string,
         public empresaId:number | null,
         public perfil:string,
-        public empresaNome?:string | null
+        public empresaNome?:string | null,
+        public endereco?:EnderecoUsuario | null
     ){
 
     }

@@ -9,3 +9,18 @@ export interface AuthState {
     token : string
 
 }
+
+export interface CadastroUsuarioRequest{
+    nome:string
+    email:string
+    senha:string
+    cpf:string
+    telefone:string
+}
+
+export interface CadastroEmpresaRequest extends CadastroUsuarioRequest{
+    razaoSocial:string
+    cnpj:string
+    telefoneEmpresa:string
+    categoriaId:number | null
+}

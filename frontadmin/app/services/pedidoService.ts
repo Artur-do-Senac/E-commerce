@@ -1,4 +1,4 @@
-import { Pedido } from "../types/pedido";
+import { ItemPedidoRequest, Pedido } from "../types/pedido";
 import api from "./api";
 
 export async function buscarListaPedidos() : Promise<Pedido[]> {
@@ -26,12 +26,15 @@ export async function consultaPedidoPorId(id:number) : Promise<Pedido>{
 
 }
 
-export async function atualizarPedido(pedido:Pedido) : Promise<number>{
-    const dadosRetorno = await api.put<number>('/pedidos/'+pedido.id, pedido);
+// o pedido é criado a partir dos itens do carrinho (produto + quantidade), o valor total é calculado no back
+export async function salvarPedido(itens:ItemPedidoRequest[]) : Promise<Pedido>{
+    const dadosRetorno = await api.post<Pedido>('/pedidos', { itens });
     return dadosRetorno.data;
 }
 
-export async function salvarPedido(pedido:Pedido) : Promise<number>{
-    const dadosRetorno = await api.post<number>('/pedidos', pedido);
-    return dadosRetorno.data;
+
+// o GERENTE conclui os itens dos produtos da empresa dele no pedido (o estoque desses produtos é baixado no back)
+export async function concluirItensPedido(id:number) : Promise<number>{
+    const dados = await api.patch('/pedidos/'+id+'/concluir');
+    return dados.status;
 }
