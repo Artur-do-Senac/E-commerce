@@ -241,7 +241,7 @@ export default function Produtos() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     {produtosFiltrados.map((produto) => (
                         <div key={produto.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-xl">
                             <div className={`h-1.5 w-full ${statusBarras[produto.status]}`}></div>
