@@ -1,6 +1,8 @@
 package com.example.ecommerceb2b.presentation;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.example.ecommerceb2b.application.DTOs.CadastroEmpresaRequest;
+import com.example.ecommerceb2b.application.DTOs.CadastroUsuarioRequest;
 import com.example.ecommerceb2b.application.DTOs.EsqueciSenhaRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginRequest;
 import com.example.ecommerceb2b.application.DTOs.LoginResponse;
@@ -37,6 +39,30 @@ public class AuthController {
             return ResponseEntity.ok(resultadoAutenticacaoRetornoToken);
         }
         return ResponseEntity.badRequest().body("Usuário e/ou senha inválidos");
+    }
+
+    @PostMapping("/cadastro")
+    @Operation(summary = "Cadastro de cliente", description = "Endpoint público: cria um usuário do tipo USER (cliente)")
+    public ResponseEntity<?> cadastrarCliente (@RequestBody CadastroUsuarioRequest request){
+
+        try {
+            return ResponseEntity.ok(usuarioService.cadastrarCliente(request));
+        } catch (Exception e) {
+            // Dado inválido (CPF, e-mail, e-mail já cadastrado...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/cadastro-empresa")
+    @Operation(summary = "Cadastro de empresa", description = "Endpoint público: cria a empresa e o usuário GERENTE dela")
+    public ResponseEntity<?> cadastrarEmpresa (@RequestBody CadastroEmpresaRequest request){
+
+        try {
+            return ResponseEntity.ok(usuarioService.cadastrarEmpresa(request));
+        } catch (Exception e) {
+            // Dado inválido (CNPJ, categoria, CPF, e-mail...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     /* PARA AJUSTAR O RESTANTE, É NECESSÁRIO CRIAR UM METODO PRA CADA UM DENTRO DE USUARIOSERVICE */

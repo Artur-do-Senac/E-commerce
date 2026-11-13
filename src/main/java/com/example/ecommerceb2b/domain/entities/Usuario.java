@@ -4,7 +4,9 @@ import com.example.ecommerceb2b.application.DTOs.CriarAdminRequest;
 import com.example.ecommerceb2b.application.DTOs.EnumStatusUsuario;
 import com.example.ecommerceb2b.application.DTOs.UsuarioLogado;
 import com.example.ecommerceb2b.application.DTOs.UsuarioRequest;
+import com.example.ecommerceb2b.application.DTOs.EnderecoUsuarioRequest;
 import com.example.ecommerceb2b.domain.valueobject.CPF;
+import com.example.ecommerceb2b.domain.valueobject.Endereco;
 import com.example.ecommerceb2b.domain.valueobject.Telefone;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,10 @@ public class Usuario implements UserDetails {
 
     @Embedded
     private Telefone telefone;
+    // Endereço de entrega: o cliente completa depois do cadastro e só consegue fazer pedido com ele preenchido
+    @Embedded
+    private Endereco endereco;
+
     private String senha;
     private String email;
     private String role = "ROLE_USER";
@@ -85,6 +91,11 @@ public class Usuario implements UserDetails {
         this.setRole("ROLE_ADMIN");
     }
 
+    // O endereço é validado pelo próprio Endereco (CEP, rua, número, bairro, cidade e UF obrigatórios)
+    public void informarEndereco(EnderecoUsuarioRequest endereco) {
+        this.endereco = new Endereco(endereco.cep(), endereco.logradouro(), endereco.numero(), endereco.complemento(), endereco.bairro(), endereco.cidade(), endereco.uf());
+    }
+
     // O perfil é ADMIN, GERENTE ou USER. Vazio mantém o que já existe (USER para um usuário novo)
     public void informarPerfil(String perfil) {
         if (perfil == null || perfil.isBlank()) {
@@ -96,9 +107,9 @@ public class Usuario implements UserDetails {
         this.role = "ROLE_" + perfil;
     }
 
-    // Multilocação: todo usuário pertence a uma empresa, só o ADMIN (global) pode ficar sem. Por isso o perfil é definido antes
+    // Multilocação: todo GERENTE pertence a uma empresa. O ADMIN (global) e o USER (cliente, que compra de várias empresas) podem ficar sem. Por isso o perfil é definido antes
     public void informarEmpresa(Empresa empresa) {
-        if (empresa == null && !"ROLE_ADMIN".equals(this.role)) {
+        if (empresa == null && "ROLE_GERENTE".equals(this.role)) {
             throw new IllegalArgumentException("Empresa Invalida!");
         }
         this.empresa = empresa;

@@ -35,14 +35,14 @@ public class ProdutoService {
         return empresaRepository.findById(empresaId).orElse(null);
     }
 
-    // Retorna os produtos da empresa de quem está logado. O ADMIN enxerga os de todas as empresas
+    // Retorna os produtos da empresa de quem está logado. O ADMIN e o cliente (USER) enxergam os de todas as empresas
     public List<ProdutoResponse> listarTodos() {
 
         var usuarioLogado = UsuarioLogado.atual();
 
         List<Produto> produtos;
 
-        if (usuarioLogado.admin()) {
+        if (usuarioLogado.admin() || usuarioLogado.cliente()) {
             produtos = produtoRepository.findAll();
         } else if (usuarioLogado.empresa_id() == null) {
             produtos = List.of();
@@ -60,7 +60,7 @@ public class ProdutoService {
 
         var produto = produtoRepository.findById(id).orElse(null);
 
-        if (produto == null || !UsuarioLogado.atual().podeAcessar(produto.getEmpresa())) {
+        if (produto == null || !(UsuarioLogado.atual().cliente() || UsuarioLogado.atual().podeAcessar(produto.getEmpresa()))) {
             return null;
         }
         return new ProdutoResponse(produto);

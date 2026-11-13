@@ -1,6 +1,5 @@
 package com.example.ecommerceb2b.presentation;
 
-import com.example.ecommerceb2b.application.DTOs.AdicionarProdutoRequest;
 import com.example.ecommerceb2b.application.DTOs.AttStatusPedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoResponse;
@@ -26,7 +25,7 @@ public class PedidoController {
 
 
     @GetMapping
-    @Operation(summary = "Lista todos os pedidos", description = "Retorna uma lista completa dos pedidos cadastrados no sistema.")
+    @Operation(summary = "Lista os pedidos", description = "O ADMIN recebe todos os pedidos. O GERENTE recebe os pedidos que têm produtos da empresa dele, somente com esses itens.")
     public ResponseEntity<List<PedidoResponse>> listarTodos() {
 
         return ResponseEntity.ok(pedidoService.listarTodos());
@@ -38,7 +37,7 @@ public class PedidoController {
 
         var pedidoEncontradoPorId = pedidoService.buscarPorId(id);
 
-        // O Service retorna null quando o ID não existe, então a Controller responde 404
+        // O Service retorna null quando o ID não existe ou não tem produtos da empresa, então a Controller responde 404
         if (pedidoEncontradoPorId != null) {
             return ResponseEntity.ok(pedidoEncontradoPorId);
         }
@@ -46,15 +45,33 @@ public class PedidoController {
     }
 
     @PostMapping
-    @Operation(summary = "Cria um novo pedido", description = "Cria um novo registro de pedido no sistema")
+    @Operation(summary = "Cria um novo pedido", description = "Cria um pedido do usuário logado a partir dos itens (produto + quantidade). O valor total é calculado pelo sistema.")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> criar(@RequestBody PedidoRequest pedido) {
 
         try {
-            PedidoResponse pedidoCriado = pedidoService.salvarPedido(pedido, 0L);
+            PedidoResponse pedidoCriado = pedidoService.criarPedido(pedido);
             return ResponseEntity.ok(pedidoCriado);
         } catch (Exception e) {
-            // Dado inválido (valor total, desconto...): responde 400 com a mensagem do erro
+            // Dado inválido (sem itens, produto, quantidade...): responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{id}/concluir")
+    @Operation(summary = "Conclui os itens da empresa", description = "O GERENTE conclui os itens dos produtos da empresa dele no pedido e o estoque desses produtos é baixado. O pedido fica concluído quando todas as empresas concluem os seus itens.")
+    public ResponseEntity<?> concluirItens(@PathVariable Long id) {
+
+        try {
+            var itensConcluidos = pedidoService.concluirItens(id);
+
+            // false significa que não existe pedido com esse ID ou que ele não tem produtos da empresa
+            if (itensConcluidos) {
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            // Sem item pendente ou sem estoque suficiente: responde 400 com a mensagem do erro
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -70,37 +87,6 @@ public class PedidoController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
-    }
-
-    @PatchMapping("/{id}/adicionar-produto")
-    @Operation(summary = "Adiciona um produto ao pedido", description = "Vincula um produto da empresa ao pedido no sistema")
-    public ResponseEntity<Void> adicionarProduto(@PathVariable Long id, @RequestBody AdicionarProdutoRequest adicionarProdutoRequest) {
-
-        var produtoAdicionado = pedidoService.adicionarProduto(id, adicionarProdutoRequest);
-
-        // false significa que não existe pedido ou produto com esse ID (ou que são de outra empresa)
-        if (produtoAdicionado) {
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "Atualiza o registro por ID", description = "Atualiza o registro por ID no sistema")
-    public ResponseEntity<?> atualizarPedido(@PathVariable Long id, @RequestBody PedidoRequest pedido) {
-
-        try {
-            var pedidoAtualizado = pedidoService.salvarPedido(pedido, id);
-
-            // null significa que não existe pedido com esse ID
-            if (pedidoAtualizado != null) {
-                return ResponseEntity.ok(pedidoAtualizado);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            // Dado inválido (valor total, desconto...): responde 400 com a mensagem do erro
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
 
     @DeleteMapping("/{id}/excluir")

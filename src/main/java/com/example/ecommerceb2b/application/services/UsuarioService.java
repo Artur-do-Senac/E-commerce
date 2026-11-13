@@ -1,8 +1,10 @@
 package com.example.ecommerceb2b.application.services;
 
 import com.example.ecommerceb2b.application.DTOs.*;
+import com.example.ecommerceb2b.domain.entities.Categoria;
 import com.example.ecommerceb2b.domain.entities.Empresa;
 import com.example.ecommerceb2b.domain.entities.Usuario;
+import com.example.ecommerceb2b.domain.repository.CategoriaRepository;
 import com.example.ecommerceb2b.domain.repository.EmpresaRepository;
 import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import com.example.ecommerceb2b.domain.valueobject.CPF;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +24,9 @@ public class UsuarioService {
 
     @Autowired
     private EmpresaRepository empresaRepository;
+
+    @Autowired
+    private CategoriaRepository categoriaRepository;
 
     @Autowired
     private TokenService tokenService;
@@ -81,6 +87,8 @@ public class UsuarioService {
 
         // Novo usuário
         if (id == 0L) {
+            validarEmailDisponivel(usuario.email());
+
             Usuario usuarioBanco = new Usuario(usuario, empresa);
             usuarioRepository.save(usuarioBanco);
 
@@ -132,6 +140,51 @@ public class UsuarioService {
         } catch (Exception e) {
             throw new RuntimeException("Erro ao buscar usuário logado!");
         }
+    }
+
+    // Salva o endereço de entrega do usuário logado. Dados inválidos lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public UsuarioResponse atualizarEndereco(EnderecoUsuarioRequest endereco) {
+
+        Usuario usuarioBanco = usuarioRepository.findById(getUsuarioLogado().id()).orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado!"));
+
+        usuarioBanco.informarEndereco(endereco);
+        usuarioRepository.save(usuarioBanco);
+
+        return new UsuarioResponse(usuarioBanco);
+    }
+
+    // O e-mail é o login: não pode haver dois usuários com o mesmo (senão o token poderia sair para o usuário errado)
+    private void validarEmailDisponivel(String email) {
+
+        if (email != null && usuarioRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("E-mail ja cadastrado!");
+        }
+    }
+
+    // Cadastro público (sem token): cria um cliente, sempre com o perfil USER e sem empresa
+    // Dados inválidos (CPF, e-mail, e-mail já cadastrado...) lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public UsuarioResponse cadastrarCliente(CadastroUsuarioRequest cadastro) {
+
+        return salvarUsuario(new UsuarioRequest(cadastro.nome(), cadastro.email(), cadastro.senha(), cadastro.cpf(), cadastro.telefone(), "USER", null), 0L);
+    }
+
+    // Cadastro público (sem token): cria a empresa e o usuário GERENTE dela na mesma operação
+    // Tudo é validado antes de salvar qualquer coisa, para não sobrar uma empresa sem gerente se o cadastro do gerente for inválido
+    @Transactional
+    public UsuarioResponse cadastrarEmpresa(CadastroEmpresaRequest cadastro) {
+
+        Categoria categoria = cadastro.categoriaId() == null ? null : categoriaRepository.findById(cadastro.categoriaId()).orElse(null);
+
+        Empresa empresa = new Empresa(new EmpresaRequest(cadastro.razaoSocial(), cadastro.cnpj(), cadastro.telefoneEmpresa(), cadastro.categoriaId()), categoria);
+
+        validarEmailDisponivel(cadastro.email());
+
+        Usuario gerente = new Usuario(new UsuarioRequest(cadastro.nome(), cadastro.email(), cadastro.senha(), cadastro.cpf(), cadastro.telefone(), "GERENTE", null), empresa);
+
+        empresaRepository.save(empresa);
+        usuarioRepository.save(gerente);
+
+        return new UsuarioResponse(gerente);
     }
 
     // Cold start: cria o primeiro ADMIN (chamado pelo app desktop, sem token)

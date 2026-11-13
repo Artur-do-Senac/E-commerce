@@ -115,6 +115,18 @@ public class UsuarioController {
     }
 
 
+    @PutMapping("/meu-endereco")
+    @Operation(summary = "Completa o cadastro com o endereço", description = "O usuário logado informa o endereço de entrega (necessário para fazer pedidos). O CEP pode ser consultado em GET /endereco/{cep}")
+    public ResponseEntity<?> atualizarEndereco(@RequestBody EnderecoUsuarioRequest endereco) {
+
+        try {
+            return ResponseEntity.ok(usuarioService.atualizarEndereco(endereco));
+        } catch (Exception e) {
+            // CEP, rua, número, bairro, cidade ou UF inválidos: responde 400 com a mensagem do erro
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/buscarusuariologado")
     @Operation(summary = "Usuário logado", description = "Usuário logado")
     public ResponseEntity<UsuarioResponse> buscarUsuarioLogado() {

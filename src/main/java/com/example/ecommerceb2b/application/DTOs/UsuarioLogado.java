@@ -27,6 +27,11 @@ public record UsuarioLogado(Long id, String email, CPF cpf, Long empresa_id,
         return authorities.stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 
+    // Cliente é o usuário comum (USER): enxerga os produtos de todas as empresas para poder comprar
+    public boolean cliente() {
+        return authorities.stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_USER"));
+    }
+
     // ADMIN acessa tudo; os demais só acessam o que pertence à própria empresa
     public boolean podeAcessar(Empresa empresa) {
         return admin() || (empresa != null && empresa.getId().equals(empresa_id));

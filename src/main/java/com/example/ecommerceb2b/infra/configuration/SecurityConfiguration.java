@@ -19,15 +19,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Quem pode o quê (sem token = 401, com token mas sem a role necessária = 403):
  *
  *   Endpoint                                                    ADMIN   GERENTE   USER
- *   POST /auth/login e Swagger                                  público, sem token
+ *   POST /auth/login, /auth/cadastro, /auth/cadastro-empresa    público, sem token
+ *   GET /categorias (só a lista) e Swagger                      público, sem token
  *   POST /usuarios/admin (cold start, só sem nenhum ADMIN)      público, sem token
- *   GET /usuarios/buscarusuariologado                           x       x         x
+ *   GET /usuarios/buscarusuariologado e PUT /usuarios/meu-endereco   x   x         x
  *   /usuarios (listar, buscar, criar, editar, status, excluir)  x
  *   POST /empresas (criar)                                      x
  *   /empresas (listar, buscar, editar, status)                  x       x   (GERENTE só enxerga/edita a própria empresa)
  *   /categorias e /produtos (listar, buscar)                    x       x         x
  *   /categorias e /produtos (criar, editar, status)             x       x
- *   /pedidos (listar, buscar, editar, status)                   x       x
+ *   /pedidos (listar, buscar)                                   x       x   (GERENTE só vê os itens da empresa dele)
+ *   PATCH /pedidos/{id}/concluir (itens da própria empresa)             x
+ *   PATCH /pedidos/{id}/status                                  x
  *   POST /pedidos (criar pedido)                                x       x         x
  *   DELETE em empresas, categorias, produtos e pedidos          x
  *   Qualquer outra rota                                         basta estar logado
@@ -56,11 +59,18 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
+                        // Cadastro público de cliente (USER) e de empresa (GERENTE + empresa), e a lista de categorias (ramos) que a tela de cadastro da empresa precisa
+                        .requestMatchers(HttpMethod.POST, "/auth/cadastro", "/auth/cadastro-empresa").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categorias").permitAll()
+
                         // Cold start: o app desktop cria o primeiro ADMIN sem token (o Service só aceita quando ainda não existe nenhum ADMIN e a chave secreta confere)
                         .requestMatchers(HttpMethod.POST, "/usuarios/admin").permitAll()
 
                         // Dados de quem está logado: qualquer role (o front busca isso logo após o login, inclusive de GERENTE e USER)
                         .requestMatchers(HttpMethod.GET, "/usuarios/buscarusuariologado").authenticated()
+
+                        // Completar o próprio cadastro com o endereço: qualquer role
+                        .requestMatchers(HttpMethod.PUT, "/usuarios/meu-endereco").authenticated()
 
                         // Usuários: somente ADMIN
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
@@ -73,6 +83,12 @@ public class SecurityConfiguration {
 
                         // Consultar categorias e produtos: qualquer role
                         .requestMatchers(HttpMethod.GET, "/categorias/**", "/produtos/**").hasAnyRole("ADMIN", "GERENTE", "USER")
+
+                        // Concluir os itens da própria empresa no pedido: somente GERENTE (cada empresa conclui os seus itens)
+                        .requestMatchers(HttpMethod.PATCH, "/pedidos/*/concluir").hasRole("GERENTE")
+
+                        // Mudar o status do pedido: somente ADMIN (um pedido pode ter itens de várias empresas, então nenhuma empresa sozinha decide o status)
+                        .requestMatchers(HttpMethod.PATCH, "/pedidos/*/status").hasRole("ADMIN")
 
                         // Criar pedido: qualquer role
                         .requestMatchers(HttpMethod.POST, "/pedidos").hasAnyRole("ADMIN", "GERENTE", "USER")

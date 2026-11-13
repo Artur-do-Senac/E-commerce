@@ -9,8 +9,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Data
@@ -34,9 +32,6 @@ public class Produto {
     @JoinColumn(name = "empresa_id", referencedColumnName = "id")
     private Empresa empresa;
 
-    @ManyToMany(mappedBy = "produtos")
-    @ToString.Exclude
-    private Set<Pedido> pedidos = new HashSet<>();
 
     // Regras do domínio: o que não for válido lança erro (a Controller transforma em 400 com a mensagem)
     public void setNome(String nome) {
@@ -67,6 +62,14 @@ public class Produto {
             throw new IllegalArgumentException("Quantidade em Estoque Invalida!");
         }
         this.quantidadeEstoque = quantidadeEstoque;
+    }
+
+    // Baixa do estoque quando a empresa conclui um item de pedido. Sem estoque suficiente lança erro (a Controller transforma em 400 com a mensagem)
+    public void baixarEstoque(Integer quantidade) {
+        if (quantidade > this.quantidadeEstoque) {
+            throw new IllegalArgumentException("Estoque insuficiente para " + this.nome + "!");
+        }
+        this.quantidadeEstoque -= quantidade;
     }
 
     public Produto(ProdutoRequest produto) {

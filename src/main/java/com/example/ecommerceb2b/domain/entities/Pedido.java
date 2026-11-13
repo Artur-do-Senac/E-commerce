@@ -2,7 +2,6 @@ package com.example.ecommerceb2b.domain.entities;
 
 
 import com.example.ecommerceb2b.application.DTOs.EnumStatusPedido;
-import com.example.ecommerceb2b.application.DTOs.PedidoRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,8 +11,8 @@ import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -28,54 +27,62 @@ public class Pedido {
     private Long id;
     private BigDecimal valorTotal;
     private LocalDateTime data;
-    private BigDecimal desconto;
     private EnumStatusPedido status = EnumStatusPedido.PENDENTE;
 
-    // Empresa dona do pedido: é ela que define quem consegue enxergar e mexer nele
+    // Cliente que fez o pedido (o usuário logado na hora da compra)
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "empresa_id", referencedColumnName = "id")
-    private Empresa empresa;
+    @JoinColumn(name = "cliente_id", referencedColumnName = "id")
+    private Usuario cliente;
 
-    // Produtos do pedido: um pedido tem vários produtos e um produto pode estar em vários pedidos
-    @ManyToMany
-    @JoinTable(
-            name = "tb_pedido_produto",
-            joinColumns = @JoinColumn(name = "pedido_id"),
-            inverseJoinColumns = @JoinColumn(name = "produto_id")
-    )
+    // Itens do pedido: um pedido tem vários itens e cada item é de um produto (de qualquer empresa)
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @ToString.Exclude
-    private Set<Produto> produtos = new HashSet<>();
+    private List<ItemPedido> itens = new ArrayList<>();
 
-    public void adicionarProduto(Produto produto) {
-        this.produtos.add(produto);
+    public void adicionarItem(ItemPedido item) {
+        item.setPedido(this);
+        this.itens.add(item);
+        this.valorTotal = this.itens.stream()
+                .map(ItemPedido::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Regras do domínio: o que não for válido lança erro (a Controller transforma em 400 com a mensagem)
-    public void setValorTotal(BigDecimal valorTotal) {
-        if (valorTotal == null || valorTotal.signum() < 0) {
-            throw new IllegalArgumentException("Valor Total Invalido!");
+    // A empresa conclui os itens dos produtos dela: o estoque desses produtos é baixado (primeiro confere tudo, para não baixar só parte)
+    // Sem item pendente da empresa ou sem estoque suficiente lança erro (a Controller transforma em 400 com a mensagem)
+    public void concluirItensDaEmpresa(Long empresaId) {
+
+        List<ItemPedido> pendentes = this.itens.stream()
+                .filter(item -> item.pertenceA(empresaId) && item.getStatus() == EnumStatusPedido.PENDENTE)
+                .toList();
+
+        if (pendentes.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum item pendente da sua empresa neste pedido!");
         }
-        this.valorTotal = valorTotal;
-    }
 
-    // O desconto não pode ser negativo nem maior que o valor total (por isso o valor total é definido antes)
-    public void setDesconto(BigDecimal desconto) {
-        if (desconto == null || desconto.signum() < 0 || (valorTotal != null && desconto.compareTo(valorTotal) > 0)) {
-            throw new IllegalArgumentException("Desconto Invalido!");
+        pendentes.forEach(item -> {
+            if (item.getQuantidade() > item.getProduto().getQuantidadeEstoque()) {
+                throw new IllegalArgumentException("Estoque insuficiente para " + item.getProduto().getNome() + "!");
+            }
+        });
+
+        pendentes.forEach(item -> {
+            item.getProduto().baixarEstoque(item.getQuantidade());
+            item.setStatus(EnumStatusPedido.CONCLUIDO);
+        });
+
+        // Quando todas as empresas concluíram os seus itens, o pedido todo está concluído
+        if (this.status != EnumStatusPedido.CANCELADO && this.itens.stream().allMatch(item -> item.getStatus() == EnumStatusPedido.CONCLUIDO)) {
+            this.status = EnumStatusPedido.CONCLUIDO;
         }
-        this.desconto = desconto;
     }
 
-    public void setData(LocalDateTime data) {
-        if (data == null) {
-            throw new IllegalArgumentException("Data Invalida!");
+    // Regra do domínio: o pedido precisa ter pelo menos um item (a Controller transforma o erro em 400 com a mensagem)
+    public Pedido(Usuario cliente, List<ItemPedido> itens) {
+        if (itens == null || itens.isEmpty()) {
+            throw new IllegalArgumentException("Itens Invalidos!");
         }
-        this.data = data;
-    }
-
-    public Pedido(PedidoRequest pedido) {
-        this.setValorTotal(pedido.valorTotal());
-        this.setDesconto(pedido.desconto());
-        this.setData(pedido.data());
+        this.cliente = cliente;
+        this.data = LocalDateTime.now();
+        itens.forEach(this::adicionarItem);
     }
 }

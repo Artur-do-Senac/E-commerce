@@ -1,23 +1,24 @@
 package com.example.ecommerceb2b.application.services;
 
-import com.example.ecommerceb2b.application.DTOs.AdicionarProdutoRequest;
 import com.example.ecommerceb2b.application.DTOs.EnumStatusPedido;
+import com.example.ecommerceb2b.application.DTOs.ItemPedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoRequest;
 import com.example.ecommerceb2b.application.DTOs.PedidoResponse;
 import com.example.ecommerceb2b.application.DTOs.UsuarioLogado;
-import com.example.ecommerceb2b.domain.entities.Empresa;
+import com.example.ecommerceb2b.domain.entities.ItemPedido;
 import com.example.ecommerceb2b.domain.entities.Pedido;
-import com.example.ecommerceb2b.domain.entities.Produto;
-import com.example.ecommerceb2b.domain.repository.EmpresaRepository;
 import com.example.ecommerceb2b.domain.repository.PedidoRepository;
 import com.example.ecommerceb2b.domain.repository.ProdutoRepository;
+import com.example.ecommerceb2b.domain.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 // Camada de Application: concentra a lógica dos pedidos e conversa com o Repository (banco de dados).
 // A PedidoController só chama os métodos daqui.
+// Um pedido pertence a um cliente e pode ter itens de várias empresas: o GERENTE enxerga o pedido, mas só com os itens da empresa dele
 @Service
 public class PedidoService {
 
@@ -28,83 +29,115 @@ public class PedidoService {
     private ProdutoRepository produtoRepository;
 
     @Autowired
-    private EmpresaRepository empresaRepository;
+    private UsuarioRepository usuarioRepository;
 
-    // A empresa do usuário logado (null para quem não pertence a nenhuma, como o ADMIN)
-    private Empresa getEmpresaUsuarioLogado() {
+    // O pedido tem pelo menos um item de produto da empresa?
+    private boolean temItemDaEmpresa(Pedido pedido, Long empresaId) {
 
-        var empresaId = UsuarioLogado.atual().empresa_id();
-
-        if (empresaId == null) {
-            return null;
-        }
-        return empresaRepository.findById(empresaId).orElse(null);
+        return empresaId != null && pedido.getItens().stream().anyMatch(item -> item.pertenceA(empresaId));
     }
 
-    // Retorna os pedidos da empresa de quem está logado. O ADMIN enxerga os de todas as empresas
+    // O ADMIN enxerga os pedidos completos. O GERENTE enxerga os pedidos que têm produtos da empresa dele, só com esses itens (e o valor calculado só com eles)
     public List<PedidoResponse> listarTodos() {
 
         var usuarioLogado = UsuarioLogado.atual();
 
-        List<Pedido> pedidos;
-
         if (usuarioLogado.admin()) {
-            pedidos = pedidoRepository.findAll();
-        } else if (usuarioLogado.empresa_id() == null) {
-            pedidos = List.of();
-        } else {
-            pedidos = pedidoRepository.getPedidosByEmpresa_Id(usuarioLogado.empresa_id());
+            return pedidoRepository.findAll()
+                    .stream()
+                    .map(PedidoResponse::new)
+                    .toList();
         }
 
-        return pedidos.stream()
-                .map(PedidoResponse::new)
+        if (usuarioLogado.empresa_id() == null) {
+            return List.of();
+        }
+
+        return pedidoRepository.findDistinctByItens_Produto_Empresa_Id(usuarioLogado.empresa_id())
+                .stream()
+                .map(pedido -> new PedidoResponse(pedido, usuarioLogado.empresa_id()))
                 .toList();
     }
 
-    // Busca um pedido pelo ID. Retorna o PedidoResponse (nunca a entidade) ou null quando não existe ou é de outra empresa (a Controller transforma o null em 404)
+    // Busca um pedido pelo ID. Retorna o PedidoResponse (nunca a entidade) ou null quando não existe ou não tem produtos da empresa de quem está logado (a Controller transforma o null em 404)
     public PedidoResponse buscarPorId(Long id) {
 
         var pedido = pedidoRepository.findById(id).orElse(null);
 
-        if (pedido == null || !UsuarioLogado.atual().podeAcessar(pedido.getEmpresa())) {
+        if (pedido == null) {
             return null;
         }
-        return new PedidoResponse(pedido);
-    }
 
-    // Salva o pedido: com id 0 cria um novo (da empresa de quem está logado), com qualquer outro id atualiza o existente. Retorna o pedido salvo ou null quando o ID não existe ou é de outra empresa
-    // Dados inválidos (valor total, desconto...) lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
-    public PedidoResponse salvarPedido(PedidoRequest pedido, Long id) {
+        var usuarioLogado = UsuarioLogado.atual();
 
-        // Novo pedido
-        if (id == 0L) {
-            Pedido pedidoBanco = new Pedido(pedido);
-            pedidoBanco.setEmpresa(getEmpresaUsuarioLogado());
-            pedidoRepository.save(pedidoBanco);
-
-            return new PedidoResponse(pedidoBanco);
+        if (usuarioLogado.admin()) {
+            return new PedidoResponse(pedido);
         }
 
-        // Pedido existente (o valor total vem antes do desconto, porque o desconto não pode passar do total)
-        Pedido pedidoBanco = pedidoRepository.findById(id).orElse(null);
-
-        if (pedidoBanco != null && UsuarioLogado.atual().podeAcessar(pedidoBanco.getEmpresa())) {
-            pedidoBanco.setValorTotal(pedido.valorTotal());
-            pedidoBanco.setDesconto(pedido.desconto());
-            pedidoBanco.setData(pedido.data());
-            pedidoRepository.save(pedidoBanco);
-
-            return new PedidoResponse(pedidoBanco);
+        if (temItemDaEmpresa(pedido, usuarioLogado.empresa_id())) {
+            return new PedidoResponse(pedido, usuarioLogado.empresa_id());
         }
         return null;
     }
 
-    // Atualiza somente o status do pedido. Retorna true quando atualizou e false quando o ID não existe ou é de outra empresa
+    // Cria um pedido do usuário logado a partir dos itens (produto + quantidade). O valor total é calculado a partir dos preços atuais dos produtos
+    // Dados inválidos (sem itens, produto inexistente, quantidade...) lançam IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    public PedidoResponse criarPedido(PedidoRequest pedido) {
+
+        List<ItemPedido> itens = pedido.itens() == null ? List.of() : pedido.itens().stream()
+                .map(this::criarItem)
+                .toList();
+
+        var cliente = usuarioRepository.findById(UsuarioLogado.atual().id()).orElse(null);
+
+        // Para comprar o cliente precisa ter completado o cadastro com o endereço de entrega
+        if (cliente == null || cliente.getEndereco() == null) {
+            throw new IllegalArgumentException("Complete seu cadastro com o endereco para finalizar o pedido!");
+        }
+
+        Pedido pedidoBanco = new Pedido(cliente, itens);
+        pedidoRepository.save(pedidoBanco);
+
+        return new PedidoResponse(pedidoBanco);
+    }
+
+    private ItemPedido criarItem(ItemPedidoRequest item) {
+
+        var produto = item.produtoId() == null ? null : produtoRepository.findById(item.produtoId()).orElse(null);
+
+        return new ItemPedido(produto, item.quantidade());
+    }
+
+    // O GERENTE conclui os itens dos produtos da empresa dele (o estoque desses produtos é baixado). Retorna true quando concluiu e false quando o ID não existe ou o pedido não tem produtos da empresa dele
+    // Sem item pendente ou sem estoque suficiente lança IllegalArgumentException (a Controller transforma em 400 com a mensagem)
+    @Transactional
+    public boolean concluirItens(Long id) {
+
+        Pedido pedidoBanco = pedidoRepository.findById(id).orElse(null);
+
+        var empresaId = UsuarioLogado.atual().empresa_id();
+
+        if (pedidoBanco == null || !temItemDaEmpresa(pedidoBanco, empresaId)) {
+            return false;
+        }
+
+        pedidoBanco.concluirItensDaEmpresa(empresaId);
+
+        pedidoBanco.getItens().stream()
+                .filter(item -> item.pertenceA(empresaId))
+                .forEach(item -> produtoRepository.save(item.getProduto()));
+        pedidoRepository.save(pedidoBanco);
+
+        return true;
+    }
+
+    // Atualiza somente o status do pedido. Retorna true quando atualizou e false quando o ID não existe ou não é de uma empresa de quem está logado
     public boolean atualizarStatus(EnumStatusPedido status, Long id) {
 
         Pedido pedidoBanco = pedidoRepository.findById(id).orElse(null);
 
-        if (pedidoBanco != null && UsuarioLogado.atual().podeAcessar(pedidoBanco.getEmpresa())) {
+        if (pedidoBanco != null
+                && (UsuarioLogado.atual().admin() || temItemDaEmpresa(pedidoBanco, UsuarioLogado.atual().empresa_id()))) {
             pedidoBanco.setStatus(status);
             pedidoRepository.save(pedidoBanco);
 
@@ -113,29 +146,7 @@ public class PedidoService {
         return false;
     }
 
-    // Adiciona um produto ao pedido. Retorna true quando adicionou (ou o produto já estava no pedido) e false quando o pedido ou o produto não existem ou são de outra empresa
-    public boolean adicionarProduto(Long id, AdicionarProdutoRequest adicionarProdutoRequest) {
-
-        Pedido pedidoBanco = pedidoRepository.findById(id).orElse(null);
-        Produto produtoBanco = produtoRepository.findById(adicionarProdutoRequest.produto_id()).orElse(null);
-
-        if (pedidoBanco != null && produtoBanco != null
-                && UsuarioLogado.atual().podeAcessar(pedidoBanco.getEmpresa())
-                && UsuarioLogado.atual().podeAcessar(produtoBanco.getEmpresa())) {
-
-            var produtoJaAdicionado = pedidoBanco.getProdutos().stream()
-                    .anyMatch(p -> p.getId().equals(produtoBanco.getId()));
-
-            if (!produtoJaAdicionado) {
-                pedidoBanco.adicionarProduto(produtoBanco);
-                pedidoRepository.save(pedidoBanco);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    // Exclui o pedido pelo ID
+    // Exclui o pedido pelo ID (os itens do pedido são excluídos junto)
     public void deletarPedidoPorId(Long id) {
 
         pedidoRepository.deleteById(id);

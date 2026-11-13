@@ -1,7 +1,7 @@
 package com.example.ecommerceb2b.application.DTOs;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.List;
 
-public record PedidoRequest(BigDecimal valorTotal, LocalDateTime data, BigDecimal desconto) {
+// O pedido é feito de itens (produto + quantidade). O valor total é calculado pelo back
+public record PedidoRequest(List<ItemPedidoRequest> itens) {
 }

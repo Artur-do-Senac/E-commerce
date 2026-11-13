@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
-    List<Pedido> getPedidosByEmpresa_Id(Long empresa);
+    // Pedidos que têm pelo menos um item de produto da empresa
+    List<Pedido> findDistinctByItens_Produto_Empresa_Id(Long empresa);
 }
